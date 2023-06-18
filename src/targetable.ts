@@ -89,8 +89,10 @@ export function targetable(...args: any[]): any {
             super.mountCallback();
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
         [targetChangedCallback]() {}
 
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
         [targetsChangedCallback]() {}
     };
 }
