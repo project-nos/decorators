@@ -3,7 +3,6 @@ import rollupBabel from '@rollup/plugin-babel';
 
 const babel = fromRollup(rollupBabel);
 
-
 export default {
     mimeTypes: {
         '**/*.ts': 'js',
@@ -14,15 +13,16 @@ export default {
         babel({
             extensions: ['.ts'],
             babelHelpers: 'runtime',
-            presets: [
-                ['@babel/preset-typescript'],
-            ],
+            presets: [['@babel/preset-typescript']],
             plugins: [
                 ['@babel/plugin-transform-runtime'],
-                ['@babel/plugin-proposal-decorators', {
-                    version: '2023-05',
-                }],
-            ]
-        })
-    ]
-}
+                [
+                    '@babel/plugin-proposal-decorators',
+                    {
+                        version: '2023-05',
+                    },
+                ],
+            ],
+        }),
+    ],
+};

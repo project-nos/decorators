@@ -8,8 +8,8 @@
   "scripts": {
     "lint:check": "eslint . --resolve-plugins-relative-to .",
     "lint:fix": "eslint . --fix --resolve-plugins-relative-to .",
-    "format:check": "prettier \"**/*.ts\" --check",
-    "format:fix": "prettier \"**/*.ts\" --write",
+    "format:check": "prettier \"**/*.{js,ts}\" --check",
+    "format:fix": "prettier \"**/*.{js,ts}\" --write",
     "test": "web-test-runner --node-resolve"
   },
   "devDependencies": {
