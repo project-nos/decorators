@@ -23,7 +23,8 @@
     {
       "files": "test/*",
       "rules": {
-        "@typescript-eslint/no-magic-numbers": "off"
+        "@typescript-eslint/no-magic-numbers": "off",
+        "@typescript-eslint/no-empty-function": "off"
       }
     }
   ]
