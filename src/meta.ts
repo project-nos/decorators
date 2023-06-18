@@ -1,6 +1,9 @@
 const symbol = Symbol.for('nos-meta');
 
 export const attributeKey = 'attribute';
+export const targetKey = 'target';
+
+export const targetsKey = 'targets';
 
 export const meta = (proto: Record<PropertyKey, unknown>, key: string): Map<string, unknown> => {
     if (!Object.prototype.hasOwnProperty.call(proto, symbol)) {

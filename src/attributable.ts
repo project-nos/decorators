@@ -16,7 +16,7 @@ export interface Attributable {
 
 const initialized = new WeakSet<CustomElement>();
 
-export const initializeAttributes = (clazz: CustomElement & Attributable): void => {
+export const initializeAttributable = (clazz: CustomElement & Attributable): void => {
     if (initialized.has(clazz)) {
         return;
     }
@@ -82,12 +82,12 @@ export function attributable(...args: any[]): any {
     }
 
     return class extends clazz implements Attributable {
-        [key: PropertyKey]: unknown;
-
         mountCallback() {
-            initializeAttributes(this);
+            initializeAttributable(this);
             super.mountCallback();
         }
+
+        [key: PropertyKey]: unknown;
 
         [serializeAttributeName](name: PropertyKey) {
             return parameterize(name);
@@ -114,7 +114,8 @@ export function attribute(...args: any[]): any {
         throw new TypeError('The @attribute decorator is for use on properties only.');
     }
 
-    return function (value: string | boolean | number) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return function (value: any) {
         if (value === undefined) {
             throw new Error(`Field "${String(context.name)}" needs to have an initial value.`);
         }
