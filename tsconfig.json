@@ -11,6 +11,7 @@
     "sourceMap": true,
     "strict": true,
     "target": "es2020",
-    "noImplicitThis": false
+    "noImplicitThis": false,
+    "allowDeclareFields": true
   }
 }

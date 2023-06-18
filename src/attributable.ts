@@ -14,15 +14,7 @@ export interface Attributable {
     [attributeChangedCallback](changed: Map<PropertyKey, unknown>): void;
 }
 
-const initialized = new WeakSet<CustomElement>();
-
 export const initializeAttributable = (clazz: CustomElement & Attributable): void => {
-    if (initialized.has(clazz)) {
-        return;
-    }
-
-    initialized.add(clazz);
-
     const proto = Object.getPrototypeOf(clazz);
     const attributes = meta(proto, attributeKey);
     for (const [name, value] of attributes) {

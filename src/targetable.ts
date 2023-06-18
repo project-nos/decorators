@@ -12,7 +12,8 @@ export interface Targetable {
 
 const findTargetElement = (clazz: CustomElement, name: string): Element | undefined => {
     const customElementTag = clazz.tagName.toLowerCase();
-    for (const element of clazz.querySelectorAll(`[nos-${customElementTag}-target="${name}"]`)) {
+
+    for (const element of clazz.querySelectorAll(`[${customElementTag}-target~="${name}"]`)) {
         if (element.closest(customElementTag) === clazz) {
             return element;
         }
@@ -23,7 +24,7 @@ const findTargetElements = (clazz: CustomElement, name: string): Element[] => {
     const customElementTag = clazz.tagName.toLowerCase();
     const elements = [];
 
-    for (const element of clazz.querySelectorAll(`[nos-${customElementTag}-targets="${name}"]`)) {
+    for (const element of clazz.querySelectorAll(`[${customElementTag}-targets~="${name}"]`)) {
         if (element.closest(customElementTag) === clazz) {
             elements.push(element);
         }
@@ -32,44 +33,24 @@ const findTargetElements = (clazz: CustomElement, name: string): Element[] => {
     return elements;
 };
 
-const initialized = new WeakSet<CustomElement>();
-
 const initializeTargetable = (clazz: CustomElement & Targetable): void => {
-    if (initialized.has(clazz)) {
-        return;
-    }
-
-    initialized.add(clazz);
-
     const proto = Object.getPrototypeOf(clazz);
     const target = meta(proto, targetKey);
     for (const [name] of target) {
-        const element = findTargetElement(clazz, name);
-
-        if (element === undefined) {
-            continue;
-        }
-
         Object.defineProperty(clazz, name, {
             configurable: true,
-            get: function (): Element {
-                return element;
+            get: function (): Element | undefined {
+                return findTargetElement(clazz, name);
             },
         });
     }
 
     const targets = meta(proto, targetsKey);
     for (const [name] of targets) {
-        const elements = findTargetElements(clazz, name);
-
-        if (!elements.length) {
-            continue;
-        }
-
         Object.defineProperty(clazz, name, {
             configurable: true,
             get: function (): Element[] {
-                return elements;
+                return findTargetElements(clazz, name);
             },
         });
     }
@@ -89,11 +70,13 @@ export function targetable(...args: any[]): any {
             super.mountCallback();
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        [targetChangedCallback]() {}
+        [targetChangedCallback]() {
+            return;
+        }
 
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        [targetsChangedCallback]() {}
+        [targetsChangedCallback]() {
+            return;
+        }
     };
 }
 

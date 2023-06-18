@@ -6,15 +6,16 @@
   "author": "Andreas Penz",
   "type": "module",
   "scripts": {
-    "lint:check": "eslint . --resolve-plugins-relative-to .",
-    "lint:fix": "eslint . --fix --resolve-plugins-relative-to .",
+    "lint:check": "eslint \"**/*.{js,ts}\"",
+    "lint:fix": "eslint . --fix \"**/*.{js,ts}\"",
     "format:check": "prettier \"**/*.{js,ts}\" --check",
     "format:fix": "prettier \"**/*.{js,ts}\" --write",
-    "test": "web-test-runner --node-resolve"
+    "test": "web-test-runner --node-resolve --watch"
   },
   "devDependencies": {
     "@babel/plugin-proposal-decorators": "^7.22.5",
     "@babel/plugin-transform-runtime": "^7.22.5",
+    "@babel/plugin-transform-typescript": "^7.22.5",
     "@babel/preset-typescript": "^7.22.5",
     "@open-wc/testing": "^3.2.0",
     "@rollup/plugin-babel": "^6.0.3",
