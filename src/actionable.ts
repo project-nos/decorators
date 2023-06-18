@@ -56,6 +56,10 @@ const initializeActionable = (clazz: CustomElement): void => {
     for (const element of clazz.querySelectorAll(`[${clazz.tagName.toLowerCase()}-action]`)) {
         bindActions(clazz, element);
     }
+
+    if (clazz.hasAttribute(`${clazz.tagName.toLowerCase()}-action`)) {
+        bindActions(clazz, clazz);
+    }
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

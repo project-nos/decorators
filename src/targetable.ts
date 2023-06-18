@@ -11,7 +11,7 @@ export interface Targetable {
 }
 
 const findTargetElement = (clazz: CustomElement, name: string): Element | undefined => {
-    const customElementTag = clazz.component.toLowerCase();
+    const customElementTag = clazz.tagName.toLowerCase();
 
     for (const element of clazz.querySelectorAll(`[${customElementTag}-target~="${name}"]`)) {
         if (element.closest(customElementTag) === clazz) {
@@ -21,7 +21,7 @@ const findTargetElement = (clazz: CustomElement, name: string): Element | undefi
 };
 
 const findTargetElements = (clazz: CustomElement, name: string): Element[] => {
-    const customElementTag = clazz.component.toLowerCase();
+    const customElementTag = clazz.tagName.toLowerCase();
     const elements = [];
 
     for (const element of clazz.querySelectorAll(`[${customElementTag}-targets~="${name}"]`)) {
