@@ -10,7 +10,7 @@
     "lint:fix": "eslint . --fix \"**/*.{js,ts}\"",
     "format:check": "prettier \"**/*.{js,ts}\" --check",
     "format:fix": "prettier \"**/*.{js,ts}\" --write",
-    "test": "web-test-runner --node-resolve --watch"
+    "test": "web-test-runner --node-resolve"
   },
   "devDependencies": {
     "@babel/plugin-proposal-decorators": "^7.22.5",
