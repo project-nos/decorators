@@ -1,32 +1,27 @@
 name: Tests
 
 on:
-    pull_request:
-    push:
+  pull_request:
+  push:
 
 
 jobs:
-    lint:
-        runs-on: ubuntu-latest
-        steps:
-            -   uses: actions/checkout@v3
-                with:
-                    fetch-depth: 0
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-            -   uses: actions/setup-node@v3
-                with:
-                    node-version: 16
-                    cache: 'npm'
-                    cache-dependency-path: package-lock.json
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: npm
 
-            -   name: NPM install
-                run: npm ci
+      - run: npm ci
 
-            -   name: Lint
-                run: npm run lint:check
+      - run: npm run lint:check
 
-            -   name: Code style
-                run: npm run format:check
+      - run: npm run format:check
 
-            -   name: Test
-                run: npm run test
+      - run: npm run test
