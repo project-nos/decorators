@@ -1,6 +1,6 @@
 {
   "name": "spryker-nos",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "",
   "license": "MIT",
   "author": "Andreas Penz",
@@ -10,6 +10,10 @@
   "files": [
     "lib"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andreaspenz/spryker-nos.git"
+  },
   "scripts": {
     "lint:check": "eslint \"**/*.{js,ts}\"",
     "lint:fix": "eslint . --fix \"**/*.{js,ts}\"",
@@ -17,7 +21,8 @@
     "format:fix": "prettier \"**/*.{js,ts}\" --write",
     "test": "web-test-runner --node-resolve",
     "build": "tsc --build tsconfig.build.json",
-    "clean": "tsc --build --clean tsconfig.build.json"
+    "clean": "tsc --build --clean tsconfig.build.json",
+    "prepack": "npm run build"
   },
   "devDependencies": {
     "@babel/plugin-proposal-decorators": "^7.22.5",
