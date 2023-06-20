@@ -52,14 +52,41 @@ const handleEvent = (event: Event) => {
     }
 };
 
-const initializeActionable = (clazz: CustomElement): void => {
-    for (const element of clazz.querySelectorAll(`[${clazz.tagName.toLowerCase()}-action]`)) {
+const bindElements = (clazz: CustomElement, root: Element) => {
+    for (const element of root.querySelectorAll(`[${clazz.tagName.toLowerCase()}-action]`)) {
         bindActions(clazz, element);
     }
 
-    if (clazz.hasAttribute(`${clazz.tagName.toLowerCase()}-action`)) {
-        bindActions(clazz, clazz);
+    if (root instanceof Element && root.hasAttribute(`${clazz.tagName.toLowerCase()}-action`)) {
+        bindActions(clazz, root);
     }
+};
+
+const initializeActionable = (clazz: CustomElement): void => {
+    bindElements(clazz, clazz);
+    observeElements(clazz);
+};
+
+const observeElements = (clazz: CustomElement) => {
+    const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+            if (mutation.type === 'attributes' && mutation.target instanceof Element) {
+                bindElements(clazz, mutation.target);
+            } else if (mutation.type === 'childList' && mutation.addedNodes.length) {
+                for (const node of mutation.addedNodes) {
+                    if (node instanceof Element) {
+                        bindElements(clazz, node);
+                    }
+                }
+            }
+        }
+    });
+
+    observer.observe(clazz, {
+        childList: true,
+        subtree: true,
+        attributeFilter: [`${clazz.tagName.toLowerCase()}-action`],
+    });
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

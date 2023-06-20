@@ -97,4 +97,36 @@ describe('actionable', () => {
         expect(instance.foo.getCall(0).args[0].target.id).to.equal('el1');
         expect(instance.foo.getCall(1).args[0].target.id).to.equal('el5');
     });
+
+    it('binds elements added to elements subtree', async () => {
+        const el1 = document.createElement('div');
+        const el2 = document.createElement('div');
+
+        el1.setAttribute('actionable-test-action', 'click#foo');
+        el2.setAttribute('actionable-test-action', 'submit#foo');
+
+        instance.append(el1, el2);
+
+        // We need to wait for one microtask after injecting the HTML
+        await Promise.resolve();
+
+        expect(instance.foo).to.have.callCount(0);
+        el1.click();
+        expect(instance.foo).to.have.callCount(1);
+
+        el2.dispatchEvent(new CustomEvent('submit'));
+        expect(instance.foo).to.have.callCount(2);
+    });
+
+    it('will not fire if the action attribute is removed', () => {
+        expect(instance.foo).to.have.callCount(0);
+        const el = instance.querySelector<HTMLElement>('#el1')!;
+
+        el.click();
+        expect(instance.foo).to.have.callCount(1);
+
+        el.removeAttribute('actionable-test-action');
+        el.click();
+        expect(instance.foo).to.have.callCount(1);
+    });
 });
