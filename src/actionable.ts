@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) Andreas Penz
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 import { CustomElement, CustomElementConstructor } from './element';
 import { DecoratorContext } from './decorator';
 
@@ -62,11 +69,6 @@ const bindElements = (clazz: CustomElement, root: Element) => {
     }
 };
 
-const initializeActionable = (clazz: CustomElement): void => {
-    bindElements(clazz, clazz);
-    observeElements(clazz);
-};
-
 const observeElements = (clazz: CustomElement) => {
     const observer = new MutationObserver((mutations) => {
         for (const mutation of mutations) {
@@ -87,6 +89,11 @@ const observeElements = (clazz: CustomElement) => {
         subtree: true,
         attributeFilter: [`${clazz.tagName.toLowerCase()}-action`],
     });
+};
+
+const initializeActionable = (clazz: CustomElement): void => {
+    bindElements(clazz, clazz);
+    observeElements(clazz);
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -1,3 +1,10 @@
+/**
+ * Copyright (c) Andreas Penz
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
 export const parameterize = (key: PropertyKey): string => {
     return String(typeof key === 'symbol' ? key.description : key)
         .replace(/([A-Z]($|[a-z]))/g, '-$1')
