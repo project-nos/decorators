@@ -38,6 +38,6 @@
     "eslint-plugin-license-header": "^0.6.0",
     "prettier": "2.8.8",
     "sinon": "^15.2.0",
-    "typescript": "<5.1.0"
+    "typescript": "<5.2.0"
   }
 }
