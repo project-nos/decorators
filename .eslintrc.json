@@ -15,10 +15,18 @@
   },
   "plugins": [
     "@typescript-eslint",
+    "eslint-plugin-import",
     "license-header"
   ],
   "rules": {
     "@typescript-eslint/no-non-null-assertion": "off",
+    "import/extensions": [
+      "error",
+      "always"
+    ],
+    "import/order": [
+      "error"
+    ],
     "license-header/header": [
       "error",
       [

@@ -5,9 +5,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import { CustomElement } from '../src/element';
-import { attributable, attribute } from '../src';
 import { expect, fixture, html } from '@open-wc/testing';
+import { CustomElement } from '../src/element.js';
+import { attributable, attribute } from '../src/attributable.js';
 
 describe('initialization', () => {
     @attributable

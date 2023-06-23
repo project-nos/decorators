@@ -6,7 +6,7 @@
  */
 
 import { expect } from '@open-wc/testing';
-import { parameterize } from '../src/parameterize';
+import { parameterize } from '../src/parameterize.js';
 
 describe('parameterize', () => {
     const cases: Array<[PropertyKey, string]> = [

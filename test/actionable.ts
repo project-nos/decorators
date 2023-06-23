@@ -5,10 +5,10 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import { CustomElement } from '../src/element';
-import { actionable } from '../src';
 import { expect, fixture, html } from '@open-wc/testing';
 import { fake } from 'sinon';
+import { CustomElement } from '../src/element.js';
+import { actionable } from '../src/actionable.js';
 
 describe('actionable', () => {
     @actionable

@@ -5,10 +5,10 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import { CustomElement, CustomElementConstructor } from './element';
-import { DecoratorContext } from './decorator';
-import { attributeKey, meta } from './meta';
-import { mustParameterize, parameterize } from './parameterize';
+import { CustomElement, CustomElementConstructor } from './element.js';
+import { DecoratorContext } from './decorator.js';
+import { attributeKey, meta } from './meta.js';
+import { mustParameterize, parameterize } from './parameterize.js';
 
 const attributeChangedCallback = Symbol();
 const serializeAttributeName = Symbol();

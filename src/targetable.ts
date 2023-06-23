@@ -5,9 +5,9 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import { DecoratorContext } from './decorator';
-import { meta, targetKey, targetsKey } from './meta';
-import { CustomElement, CustomElementConstructor } from './element';
+import { DecoratorContext } from './decorator.js';
+import { meta, targetKey, targetsKey } from './meta.js';
+import { CustomElement, CustomElementConstructor } from './element.js';
 
 const targetChangedCallback = Symbol();
 const targetsChangedCallback = Symbol();

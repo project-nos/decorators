@@ -5,8 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import { CustomElement, CustomElementConstructor } from './element';
-import { DecoratorContext } from './decorator';
+import { CustomElement, CustomElementConstructor } from './element.js';
+import { DecoratorContext } from './decorator.js';
 
 const parseActionAttribute = (element: Element): { component: string; event: string; method: string }[] => {
     const attributeName = element.getAttributeNames().find((name) => name.endsWith('-action'));
