@@ -6,12 +6,12 @@
  */
 
 import { expect, fixture, html } from '@open-wc/testing';
-import { CustomElement } from '../src/element.js';
+import { Component } from '../src/element.js';
 import { target, targetable, targets } from '../src/targetable.js';
 
 describe('target', () => {
     @targetable
-    class TargetTest extends HTMLElement implements CustomElement {
+    class TargetTest extends HTMLElement implements Component {
         @target
         declare foo: HTMLElement;
 
@@ -58,7 +58,7 @@ describe('target', () => {
 
 describe('targets', () => {
     @targetable
-    class TargetsTest extends HTMLElement implements CustomElement {
+    class TargetsTest extends HTMLElement implements Component {
         @targets
         declare foos: HTMLElement[];
 

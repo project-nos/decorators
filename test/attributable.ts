@@ -6,12 +6,12 @@
  */
 
 import { expect, fixture, html } from '@open-wc/testing';
-import { CustomElement } from '../src/element.js';
+import { Component } from '../src/element.js';
 import { attributable, attribute } from '../src/attributable.js';
 
 describe('initialization', () => {
     @attributable
-    class InitializeAttributeTest extends HTMLElement implements CustomElement {
+    class InitializeAttributeTest extends HTMLElement implements Component {
         @attribute
         testNumber = 123;
 
@@ -89,7 +89,7 @@ describe('initialization', () => {
 
 describe('naming', () => {
     @attributable
-    class NamingAttributableTest extends HTMLElement implements CustomElement {
+    class NamingAttributableTest extends HTMLElement implements Component {
         @attribute
         fooBarBazBing = 'fooBarBazBing';
 
@@ -132,7 +132,7 @@ describe('naming', () => {
 
 describe('type casting', () => {
     @attributable
-    class BooleanAttributeTest extends HTMLElement implements CustomElement {
+    class BooleanAttributeTest extends HTMLElement implements Component {
         @attribute
         testBool = false;
 

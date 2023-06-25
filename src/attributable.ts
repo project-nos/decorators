@@ -5,8 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import { CustomElement, CustomElementConstructor } from './element.js';
-import { DecoratorContext } from './decorator.js';
+import { Component, ComponentConstructor } from './component.js';
 import { attributeKey, meta } from './meta.js';
 import { mustParameterize, parameterize } from './parameterize.js';
 
@@ -21,8 +20,8 @@ export interface Attributable {
     [attributeChangedCallback](changed: Map<PropertyKey, unknown>): void;
 }
 
-export const initializeAttributable = (clazz: CustomElement & Attributable): void => {
-    const proto = Object.getPrototypeOf(clazz);
+export const initializeAttributable = (component: Component & Attributable): void => {
+    const proto = Object.getPrototypeOf(component);
     const attributes = meta(proto, attributeKey);
     for (const [name, value] of attributes) {
         const parameterized = mustParameterize(name);
@@ -32,10 +31,10 @@ export const initializeAttributable = (clazz: CustomElement & Attributable): voi
             case 'number':
                 descriptor = {
                     configurable: true,
-                    get: function (this: CustomElement): number {
+                    get: function (this: Component): number {
                         return Number(this.getAttribute(parameterized) || 0);
                     },
-                    set: function (this: CustomElement, fresh: string) {
+                    set: function (this: Component, fresh: string) {
                         this.setAttribute(parameterized, fresh);
                     },
                 };
@@ -44,10 +43,10 @@ export const initializeAttributable = (clazz: CustomElement & Attributable): voi
             case 'boolean':
                 descriptor = {
                     configurable: true,
-                    get: function (this: CustomElement): boolean {
+                    get: function (this: Component): boolean {
                         return this.hasAttribute(parameterized);
                     },
-                    set: function (this: CustomElement, fresh: boolean) {
+                    set: function (this: Component, fresh: boolean) {
                         this.toggleAttribute(parameterized, fresh);
                     },
                 };
@@ -56,31 +55,29 @@ export const initializeAttributable = (clazz: CustomElement & Attributable): voi
             default:
                 descriptor = {
                     configurable: true,
-                    get: function (this: CustomElement): string {
+                    get: function (this: Component): string {
                         return this.getAttribute(parameterized) || '';
                     },
-                    set: function (this: CustomElement, fresh: string) {
+                    set: function (this: Component, fresh: string) {
                         this.setAttribute(parameterized, fresh || '');
                     },
                 };
         }
 
-        Object.defineProperty(clazz, name, descriptor);
-        if (name in clazz && !clazz.hasAttribute(parameterized)) {
-            descriptor.set!.call(clazz, value);
+        Object.defineProperty(component, name, descriptor);
+        if (name in component && !component.hasAttribute(parameterized)) {
+            descriptor.set!.call(component, value);
         }
     }
 };
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function attributable(...args: any[]): any {
-    const [clazz, context] = args as [CustomElementConstructor, DecoratorContext];
+    const [component, context] = args as [ComponentConstructor, ClassDecoratorContext];
 
-    if (typeof clazz !== 'function' || context.kind !== 'class') {
+    if (context.kind !== 'class') {
         throw new TypeError('The @attributable decorator is for use on classes only.');
     }
 
-    return class extends clazz implements Attributable {
+    return class extends component implements Attributable {
         mountCallback() {
             initializeAttributable(this);
             super.mountCallback();
@@ -103,17 +100,13 @@ export function attributable(...args: any[]): any {
         }
     };
 }
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function attribute(...args: any[]): any {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [_, context] = args as [unknown, DecoratorContext];
+    const [_, context] = args as [unknown, ClassFieldDecoratorContext];
 
     if (context.kind !== 'field') {
         throw new TypeError('The @attribute decorator is for use on properties only.');
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return function (value: any) {
         if (value === undefined) {
             throw new Error(`Field "${String(context.name)}" needs to have an initial value.`);
