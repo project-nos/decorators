@@ -7,12 +7,12 @@
 
 import { expect, fixture, html } from '@open-wc/testing';
 import { fake } from 'sinon';
-import { CustomElement } from '../src/element.js';
+import { Component } from '../src/element.js';
 import { actionable } from '../src/actionable.js';
 
 describe('actionable', () => {
     @actionable
-    class ActionableTest extends HTMLElement implements CustomElement {
+    class ActionableTest extends HTMLElement implements Component {
         foo = fake();
 
         bar = fake();

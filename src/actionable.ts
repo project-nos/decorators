@@ -5,8 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import { CustomElement, CustomElementConstructor } from './element.js';
-import { DecoratorContext } from './decorator.js';
+import { Component, ComponentConstructor } from './component.js';
 
 const parseActionAttribute = (element: Element): { component: string; event: string; method: string }[] => {
     const attributeName = element.getAttributeNames().find((name) => name.endsWith('-action'));
@@ -32,9 +31,9 @@ const parseActionAttribute = (element: Element): { component: string; event: str
     return actions;
 };
 
-const bindActions = (clazz: CustomElement, element: Element) => {
+const bindActions = (component: Component, element: Element) => {
     for (const action of parseActionAttribute(element)) {
-        if (action.component !== clazz.tagName.toLowerCase()) {
+        if (action.component !== component.tagName.toLowerCase()) {
             continue;
         }
 
@@ -59,52 +58,51 @@ const handleEvent = (event: Event) => {
     }
 };
 
-const bindElements = (clazz: CustomElement, root: Element) => {
-    for (const element of root.querySelectorAll(`[${clazz.tagName.toLowerCase()}-action]`)) {
-        bindActions(clazz, element);
+const bindElements = (component: Component, root: Element) => {
+    for (const element of root.querySelectorAll(`[${component.tagName.toLowerCase()}-action]`)) {
+        bindActions(component, element);
     }
 
-    if (root instanceof Element && root.hasAttribute(`${clazz.tagName.toLowerCase()}-action`)) {
-        bindActions(clazz, root);
+    if (root instanceof Element && root.hasAttribute(`${component.tagName.toLowerCase()}-action`)) {
+        bindActions(component, root);
     }
 };
 
-const observeElements = (clazz: CustomElement) => {
+const observeElements = (component: Component) => {
     const observer = new MutationObserver((mutations) => {
         for (const mutation of mutations) {
             if (mutation.type === 'attributes' && mutation.target instanceof Element) {
-                bindElements(clazz, mutation.target);
+                bindElements(component, mutation.target);
             } else if (mutation.type === 'childList' && mutation.addedNodes.length) {
                 for (const node of mutation.addedNodes) {
                     if (node instanceof Element) {
-                        bindElements(clazz, node);
+                        bindElements(component, node);
                     }
                 }
             }
         }
     });
 
-    observer.observe(clazz, {
+    observer.observe(component, {
         childList: true,
         subtree: true,
-        attributeFilter: [`${clazz.tagName.toLowerCase()}-action`],
+        attributeFilter: [`${component.tagName.toLowerCase()}-action`],
     });
 };
 
-const initializeActionable = (clazz: CustomElement): void => {
-    bindElements(clazz, clazz);
-    observeElements(clazz);
+const initializeActionable = (component: Component): void => {
+    bindElements(component, component);
+    observeElements(component);
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function actionable(...args: any[]): any {
-    const [clazz, context] = args as [CustomElementConstructor, DecoratorContext];
+    const [component, context] = args as [ComponentConstructor, ClassDecoratorContext];
 
-    if (typeof clazz !== 'function' || context.kind !== 'class') {
+    if (context.kind !== 'class') {
         throw new TypeError('The @actionable decorator is for use on classes only.');
     }
 
-    return class extends clazz {
+    return class extends component {
         mountCallback() {
             initializeActionable(this);
             super.mountCallback();

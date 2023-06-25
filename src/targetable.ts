@@ -5,9 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import { DecoratorContext } from './decorator.js';
 import { meta, targetKey, targetsKey } from './meta.js';
-import { CustomElement, CustomElementConstructor } from './element.js';
+import { Component, ComponentConstructor } from './component.js';
 
 const targetChangedCallback = Symbol();
 const targetsChangedCallback = Symbol();
@@ -17,22 +16,22 @@ export interface Targetable {
     [targetsChangedCallback](key: PropertyKey, targets: Element[]): void;
 }
 
-const findTargetElement = (clazz: CustomElement, name: string): Element | undefined => {
-    const customElementTag = clazz.tagName.toLowerCase();
+const findTargetElement = (component: Component, name: string): Element | undefined => {
+    const customElementTag = component.tagName.toLowerCase();
 
-    for (const element of clazz.querySelectorAll(`[${customElementTag}-target~="${name}"]`)) {
-        if (element.closest(customElementTag) === clazz) {
+    for (const element of component.querySelectorAll(`[${customElementTag}-target~="${name}"]`)) {
+        if (element.closest(customElementTag) === component) {
             return element;
         }
     }
 };
 
-const findTargetElements = (clazz: CustomElement, name: string): Element[] => {
-    const customElementTag = clazz.tagName.toLowerCase();
+const findTargetElements = (component: Component, name: string): Element[] => {
+    const customElementTag = component.tagName.toLowerCase();
     const elements = [];
 
-    for (const element of clazz.querySelectorAll(`[${customElementTag}-targets~="${name}"]`)) {
-        if (element.closest(customElementTag) === clazz) {
+    for (const element of component.querySelectorAll(`[${customElementTag}-targets~="${name}"]`)) {
+        if (element.closest(customElementTag) === component) {
             elements.push(element);
         }
     }
@@ -40,38 +39,37 @@ const findTargetElements = (clazz: CustomElement, name: string): Element[] => {
     return elements;
 };
 
-const initializeTargetable = (clazz: CustomElement & Targetable): void => {
-    const proto = Object.getPrototypeOf(clazz);
+const initializeTargetable = (component: Component & Targetable): void => {
+    const proto = Object.getPrototypeOf(component);
     const target = meta(proto, targetKey);
     for (const [name] of target) {
-        Object.defineProperty(clazz, name, {
+        Object.defineProperty(component, name, {
             configurable: true,
             get: function (): Element | undefined {
-                return findTargetElement(clazz, name);
+                return findTargetElement(component, name);
             },
         });
     }
 
     const targets = meta(proto, targetsKey);
     for (const [name] of targets) {
-        Object.defineProperty(clazz, name, {
+        Object.defineProperty(component, name, {
             configurable: true,
             get: function (): Element[] {
-                return findTargetElements(clazz, name);
+                return findTargetElements(component, name);
             },
         });
     }
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function targetable(...args: any[]): any {
-    const [clazz, context] = args as [CustomElementConstructor, DecoratorContext];
+    const [component, context] = args as [ComponentConstructor, ClassDecoratorContext];
 
-    if (typeof clazz !== 'function' || context.kind !== 'class') {
+    if (context.kind !== 'class') {
         throw new TypeError('The @targetable decorator is for use on classes only.');
     }
 
-    return class extends clazz implements Targetable {
+    return class extends component implements Targetable {
         mountCallback() {
             initializeTargetable(this);
             super.mountCallback();
@@ -87,16 +85,13 @@ export function targetable(...args: any[]): any {
     };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function target(...args: any[]): any {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [_, context] = args as [unknown, DecoratorContext];
+    const [_, context] = args as [unknown, ClassFieldDecoratorContext];
 
     if (context.kind !== 'field') {
         throw new TypeError('The @target decorator is for use on properties only.');
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return function (value: any) {
         if (value !== undefined) {
             throw new Error(`Field "${String(context.name)}" cannot have an initial value.`);
@@ -106,16 +101,13 @@ export function target(...args: any[]): any {
     };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function targets(...args: any[]): any {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [_, context] = args as [unknown, DecoratorContext];
+    const [_, context] = args as [unknown, ClassFieldDecoratorContext];
 
     if (context.kind !== 'field') {
         throw new TypeError('The @targets decorator is for use on properties only.');
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return function (value: any) {
         if (value !== undefined) {
             throw new Error(`Field "${String(context.name)}" cannot have an initial value.`);
