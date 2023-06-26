@@ -6,3 +6,8 @@
 [![npm bundle size](https://img.shields.io/bundlephobia/min/spryker-nos?style=flat-square)](https://bundlephobia.com/package/spryker-nos)
 
 Spryker NOS is a library to help you develop spryker frontend components fast and easy.
+
+***
+
+For more information take a look at the [Wiki](https://github.com/andreaspenz/spryker-nos/wiki).
+
