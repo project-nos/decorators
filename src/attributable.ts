@@ -7,20 +7,9 @@
 
 import { Component, ComponentConstructor } from './component.js';
 import { attributeKey, meta } from './meta.js';
-import { mustParameterize, parameterize } from './parameterize.js';
+import { mustParameterize } from './parameterize.js';
 
-const attributeChangedCallback = Symbol();
-const serializeAttributeName = Symbol();
-
-export interface Attributable {
-    [key: PropertyKey]: unknown;
-
-    [serializeAttributeName](name: PropertyKey): string;
-
-    [attributeChangedCallback](changed: Map<PropertyKey, unknown>): void;
-}
-
-export const initializeAttributable = (component: Component & Attributable): void => {
+export const initializeAttributable = (component: Component): void => {
     const proto = Object.getPrototypeOf(component);
     const attributes = meta(proto, attributeKey);
     for (const [name, value] of attributes) {
@@ -77,26 +66,10 @@ export function attributable(...args: any[]): any {
         throw new TypeError('The @attributable decorator is for use on classes only.');
     }
 
-    return class extends component implements Attributable {
+    return class extends component {
         mountCallback() {
             initializeAttributable(this);
             super.mountCallback();
-        }
-
-        [key: PropertyKey]: unknown;
-
-        [serializeAttributeName](name: PropertyKey) {
-            return parameterize(name);
-        }
-
-        [attributeChangedCallback](changed: Map<PropertyKey, unknown>) {
-            for (const [name, value] of changed) {
-                if (typeof value === 'boolean') {
-                    this.toggleAttribute(this[serializeAttributeName](name), value);
-                } else {
-                    this.setAttribute(this[serializeAttributeName](name), String(value));
-                }
-            }
         }
     };
 }

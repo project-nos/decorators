@@ -8,14 +8,6 @@
 import { meta, targetKey, targetsKey } from './meta.js';
 import { Component, ComponentConstructor } from './component.js';
 
-const targetChangedCallback = Symbol();
-const targetsChangedCallback = Symbol();
-
-export interface Targetable {
-    [targetChangedCallback](key: PropertyKey, target: Element): void;
-    [targetsChangedCallback](key: PropertyKey, targets: Element[]): void;
-}
-
 const findTargetElement = (component: Component, name: string): Element | undefined => {
     const customElementTag = component.tagName.toLowerCase();
 
@@ -39,7 +31,7 @@ const findTargetElements = (component: Component, name: string): Element[] => {
     return elements;
 };
 
-const initializeTargetable = (component: Component & Targetable): void => {
+const initializeTargetable = (component: Component): void => {
     const proto = Object.getPrototypeOf(component);
     const target = meta(proto, targetKey);
     for (const [name] of target) {
@@ -69,18 +61,10 @@ export function targetable(...args: any[]): any {
         throw new TypeError('The @targetable decorator is for use on classes only.');
     }
 
-    return class extends component implements Targetable {
+    return class extends component {
         mountCallback() {
             initializeTargetable(this);
             super.mountCallback();
-        }
-
-        [targetChangedCallback]() {
-            return;
-        }
-
-        [targetsChangedCallback]() {
-            return;
         }
     };
 }

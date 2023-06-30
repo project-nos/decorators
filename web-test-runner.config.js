@@ -4,7 +4,6 @@ import rollupBabel from '@rollup/plugin-babel';
 const babel = fromRollup(rollupBabel);
 
 export default {
-    port: 8001,
     mimeTypes: {
         '**/*.ts': 'js',
     },
