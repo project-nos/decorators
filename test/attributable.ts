@@ -6,7 +6,7 @@
  */
 
 import { expect, fixture, html } from '@open-wc/testing';
-import { Component } from '../src/element.js';
+import { Component } from '../src/component.js';
 import { attributable, attribute } from '../src/attributable.js';
 
 describe('initialization', () => {
@@ -20,6 +20,12 @@ describe('initialization', () => {
 
         @attribute
         testString = 'foo';
+
+        @attribute
+        testArray = [1, 2, 3];
+
+        @attribute
+        testObject = { foo: 'bar' };
 
         mountCallback(): void {}
     }
@@ -38,6 +44,8 @@ describe('initialization', () => {
         expect(instance).to.have.property('testNumber', 123);
         expect(instance).to.have.property('testBool', false);
         expect(instance).to.have.property('testString', 'foo');
+        expect(instance).to.deep.property('testArray', [1, 2, 3]);
+        expect(instance).to.deep.property('testObject', { foo: 'bar' });
     });
 
     it('reflects the initial value as an attribute, if not present', async () => {
@@ -47,15 +55,27 @@ describe('initialization', () => {
         expect(instance).to.have.attribute('test-number', '123');
         expect(instance).to.not.have.attribute('test-bool');
         expect(instance).to.have.attribute('test-string', 'foo');
+        expect(instance).to.have.attribute('test-array', '[1,2,3]');
+        expect(instance).to.have.attribute('test-object', '{"foo":"bar"}');
     });
 
     it('prioritises the value in the attribute over the property', async () => {
-        instance = await fixture(html`<initialize-attribute-test test-number="456" test-bool test-string="bar" />`);
+        instance = await fixture(
+            html`<initialize-attribute-test
+                test-number="456"
+                test-bool
+                test-string="bar"
+                test-array="[4,5,6]"
+                test-object="${JSON.stringify({ foo: 'baz' })}"
+            />`,
+        );
         instance.mountCallback();
 
         expect(instance).to.have.property('testNumber', 456);
         expect(instance).to.have.property('testBool', true);
         expect(instance).to.have.property('testString', 'bar');
+        expect(instance).to.deep.property('testArray', [4, 5, 6]);
+        expect(instance).to.deep.property('testObject', { foo: 'baz' });
     });
 
     it('changes the property when the attribute changes', async () => {
@@ -70,6 +90,12 @@ describe('initialization', () => {
 
         instance.setAttribute('test-string', 'bar');
         expect(instance).to.have.property('testString', 'bar');
+
+        instance.setAttribute('test-array', JSON.stringify([4, 5, 6]));
+        expect(instance).to.deep.property('testArray', [4, 5, 6]);
+
+        instance.setAttribute('test-object', JSON.stringify({ foo: 'baz' }));
+        expect(instance).to.deep.property('testObject', { foo: 'baz' });
     });
 
     it('changes the attribute when the property changes', async () => {
@@ -84,6 +110,48 @@ describe('initialization', () => {
 
         instance.testString = 'bar';
         expect(instance).to.have.attribute('test-string', 'bar');
+
+        instance.testArray = [4, 5, 6];
+        expect(instance).to.have.attribute('test-array', JSON.stringify([4, 5, 6]));
+
+        instance.testObject = { foo: 'baz' };
+        expect(instance).to.have.attribute('test-object', JSON.stringify({ foo: 'baz' }));
+    });
+});
+
+describe('boolean casting', () => {
+    @attributable
+    class BooleanAttributeTest extends HTMLElement implements Component {
+        @attribute
+        testBool = false;
+
+        mountCallback(): void {}
+    }
+
+    window.customElements.define('boolean-attribute-test', BooleanAttributeTest);
+
+    let instance: BooleanAttributeTest;
+    it('toggles boolean properties', async () => {
+        instance = await fixture(html`<boolean-attribute-test />`);
+        instance.mountCallback();
+
+        instance.setAttribute('test-bool', 'foo');
+        expect(instance).to.have.property('testBool', true);
+
+        instance.setAttribute('test-bool', 'bar');
+        expect(instance).to.have.property('testBool', true);
+
+        instance.setAttribute('test-bool', 'false');
+        expect(instance).to.have.property('testBool', true);
+
+        instance.removeAttribute('test-bool');
+        expect(instance).to.have.property('testBool', false);
+
+        instance.testBool = true;
+        expect(instance).to.have.property('testBool', true);
+
+        instance.testBool = false;
+        expect(instance).to.have.property('testBool', false);
     });
 });
 
@@ -127,41 +195,5 @@ describe('naming', () => {
 
         instance.ClipX = 'bar';
         expect(instance.getAttributeNames()).to.include('clip-x');
-    });
-});
-
-describe('type casting', () => {
-    @attributable
-    class BooleanAttributeTest extends HTMLElement implements Component {
-        @attribute
-        testBool = false;
-
-        mountCallback(): void {}
-    }
-
-    window.customElements.define('boolean-attribute-test', BooleanAttributeTest);
-
-    let instance: BooleanAttributeTest;
-    it('toggles boolean properties', async () => {
-        instance = await fixture(html`<boolean-attribute-test />`);
-        instance.mountCallback();
-
-        instance.setAttribute('test-bool', 'foo');
-        expect(instance).to.have.property('testBool', true);
-
-        instance.setAttribute('test-bool', 'bar');
-        expect(instance).to.have.property('testBool', true);
-
-        instance.setAttribute('test-bool', 'false');
-        expect(instance).to.have.property('testBool', true);
-
-        instance.removeAttribute('test-bool');
-        expect(instance).to.have.property('testBool', false);
-
-        instance.testBool = true;
-        expect(instance).to.have.property('testBool', true);
-
-        instance.testBool = false;
-        expect(instance).to.have.property('testBool', false);
     });
 });

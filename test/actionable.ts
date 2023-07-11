@@ -7,7 +7,7 @@
 
 import { expect, fixture, html } from '@open-wc/testing';
 import { fake } from 'sinon';
-import { Component } from '../src/element.js';
+import { Component } from '../src/component.js';
 import { actionable } from '../src/actionable.js';
 
 describe('actionable', () => {
