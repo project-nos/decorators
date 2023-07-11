@@ -6,7 +6,7 @@
  */
 
 import { expect, fixture, html } from '@open-wc/testing';
-import { Component } from '../src/element.js';
+import { Component } from '../src/component.js';
 import { target, targetable, targets } from '../src/targetable.js';
 
 describe('target', () => {
