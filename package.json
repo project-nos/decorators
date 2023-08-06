@@ -1,6 +1,6 @@
 {
-  "name": "spryker-nos",
-  "description": "Spryker NOS is a library to help you develop spryker frontend components fast and easy.",
+  "name": "@project-nos/decorators",
+  "description": "Project NOS decorators is a library to help you develop spryker frontend components fast and easy.",
   "license": "MIT",
   "author": "Andreas Penz",
   "type": "module",
@@ -11,10 +11,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/andreaspenz/spryker-nos.git"
+    "url": "git+https://github.com/project-nos/decorators.git"
   },
   "bugs": {
-    "url": "https://github.com/andreaspenz/spryker-nos/issues"
+    "url": "https://github.com/project-nos/decorators/issues"
   },
   "keywords": [
     "spryker",
