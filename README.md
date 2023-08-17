@@ -7,7 +7,61 @@
 [![npm](https://img.shields.io/npm/v/@project-nos/decorators?style=flat-square)](https://www.npmjs.com/package/@project-nos/decorators)
 [![npm bundle size](https://img.shields.io/bundlephobia/min/@project-nos/decorators?style=flat-square)](https://bundlephobia.com/package/@project-nos/decorators)
 
-NOS decorators is a library to help you develop spryker frontend components fast and easy.
+### A library to help you develop spryker frontend components fast and easy.
+
+You no longer have to write all the boilerplate code needed to bring your components to life. Under the hood this library uses typescript decorators to automatically bind attributes, actions and targets to your Spryker frontend components.
+
+There is no better way to get a feel for what NOS decorators is and what it can do, than by seeing it for yourself:
+
+Imagine you create a hello-world component which generates following html:
+
+```html
+<hello-world some-number="123" some-boolean some-string="baz" some-array="[4,5,6]" some-object="{"foo":"bar"}">
+  <button hello-world-action="click#foo" hello-world-target="bar">…</button>
+  <div hello-world-targets="bazs">...</div>
+  <div hello-world-targets="bazs">...</div>
+</hello-world>
+```
+
+You no longer need to query for elements inside your `init` function, listen for events or create `getters` for attributes. Everything you have to do is to add the corresponding decorators to your class and properties.
+
+
+```typescript
+import Component from 'ShopUi/models/component';
+import { actionable, attributable, attribute, targetable, target, targets } from '@project-nos/decorators';
+
+@actionable
+@attributable
+@targetable
+export default class HelloWorld extends Component {
+    @attribute
+    private someNumber = Number();
+
+    @attribute
+    private someBoolean = Boolean();
+
+    @attribute
+    private someString = String();
+
+    @attribute
+    private someArray = Array();
+
+    @attribute
+    private someObject = Object();
+
+    @target
+    private declare bar: HTMLButtonElement;
+
+    @targets
+    private declare bazs: HTMLDivElement[];
+
+    protected readyCallback(): void {}
+
+    foo(event: Event) {
+        //...
+    }
+}
+```
 
 ***
 
