@@ -19,16 +19,41 @@ const parseActionAttribute = (element: Element): { component: string; event: str
 
     const actions = [];
     for (const action of attributeValue.trim().split(/\s+/)) {
-        const separatorPosition = Math.max(0, action.lastIndexOf('#')) || action.length;
+        if (!action.includes('#')) {
+            throw new Error('Invalid action syntax');
+        }
+
+        const separatorPos = action.lastIndexOf('#');
+        const eventName = action.slice(0, separatorPos) || getDefaultEventNameForElement(element);
+        if (eventName === undefined) {
+            throw new Error('Missing event name');
+        }
 
         actions.push({
             component: component,
-            event: action.slice(0, separatorPosition),
-            method: action.slice(separatorPosition + 1) || 'handleEvent',
+            event: eventName,
+            method: action.slice(separatorPos + 1) || 'handleEvent',
         });
     }
 
     return actions;
+};
+
+const defaultEventNames: { [tagName: string]: (element: Element) => string } = {
+    a: () => 'click',
+    button: () => 'click',
+    form: () => 'submit',
+    details: () => 'toggle',
+    input: (e) => (e.getAttribute('type') == 'submit' ? 'click' : 'input'),
+    select: () => 'change',
+    textarea: () => 'input',
+};
+
+const getDefaultEventNameForElement = (element: Element): string | undefined => {
+    const tagName = element.tagName.toLowerCase();
+    if (tagName in defaultEventNames) {
+        return defaultEventNames[tagName](element);
+    }
 };
 
 const bindActions = (component: Component, element: Element) => {

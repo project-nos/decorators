@@ -30,10 +30,11 @@ describe('actionable', () => {
                 <div id="el1" actionable-test-action="click#foo"></div>
                 <div id="el2" actionable-test-action="custom:event#foo click#foo"></div>
                 <div id="el3" actionable-test-action="click#baz focus#foo submit#foo"></div>
-                <div id="el4" actionable-test-action="handle other"></div>
-                <div id="el5" actionable-test-action="click#foo click#bar"></div>
+                <div id="el4" actionable-test-action="handle# other#"></div>
+                <button id="el5" actionable-test-action="#foo #bar"></button>
+                <div id="el6" actionable-test-action="click#foo click#bar"></div>
             </actionable-test>
-            <div id="el6" actionable-test-action="click#foo"></div>`);
+            <div id="el7" actionable-test-action="click#foo"></div>`);
         instance.mountCallback();
     });
 
@@ -56,7 +57,7 @@ describe('actionable', () => {
     });
 
     it('does not bind elements whose closest selector is not this component', () => {
-        instance.ownerDocument.querySelector<HTMLElement>('#el6')!.click();
+        instance.ownerDocument.querySelector<HTMLElement>('#el7')!.click();
         expect(instance.foo).to.have.callCount(0);
     });
 
@@ -76,7 +77,7 @@ describe('actionable', () => {
         expect(instance.foo.getCall(1).args[0].type).to.equal('submit');
     });
 
-    it('binds to `handleEvent` is function name is omitted', () => {
+    it('binds to `handleEvent` if function name is omitted', () => {
         expect(instance.handleEvent).to.have.callCount(0);
         instance.querySelector<HTMLElement>('#el4')!.dispatchEvent(new CustomEvent('handle'));
         expect(instance.handleEvent).to.have.callCount(1);
@@ -86,9 +87,17 @@ describe('actionable', () => {
         expect(instance.handleEvent.getCall(1).args[0].type).to.equal('other');
     });
 
+    it('binds to default event if event name is omitted', () => {
+        expect(instance.foo).to.have.callCount(0);
+        expect(instance.bar).to.have.callCount(0);
+        instance.querySelector<HTMLElement>('#el5')!.click();
+        expect(instance.foo).to.have.callCount(1);
+        expect(instance.bar).to.have.callCount(1);
+    });
+
     it('can bind multiple actions separated by line feed', () => {
         expect(instance.foo).to.have.callCount(0);
-        instance.querySelector<HTMLElement>('#el5')!.dispatchEvent(new CustomEvent('click'));
+        instance.querySelector<HTMLElement>('#el6')!.dispatchEvent(new CustomEvent('click'));
         expect(instance.foo).to.have.callCount(1);
         expect(instance.bar).to.have.callCount(1);
         expect(instance.foo.getCall(0).args[0].type).to.equal('click');
@@ -99,10 +108,10 @@ describe('actionable', () => {
         expect(instance.foo).to.have.callCount(0);
         instance.querySelector<HTMLElement>('#el1')!.click();
         expect(instance.foo).to.have.callCount(1);
-        instance.querySelector<HTMLElement>('#el5')!.click();
+        instance.querySelector<HTMLElement>('#el6')!.click();
         expect(instance.foo).to.have.callCount(2);
         expect(instance.foo.getCall(0).args[0].target.id).to.equal('el1');
-        expect(instance.foo.getCall(1).args[0].target.id).to.equal('el5');
+        expect(instance.foo.getCall(1).args[0].target.id).to.equal('el6');
     });
 
     it('binds elements added to elements subtree', async () => {
