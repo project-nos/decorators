@@ -6,13 +6,17 @@
  */
 
 import { Component, ComponentConstructor } from './component.js';
-import { attributeKey, meta } from './meta.js';
 import { mustParameterize } from './parameterize.js';
 
-export const initializeAttributable = (component: Component): void => {
-    const proto = Object.getPrototypeOf(component);
-    const attributes = meta(proto, attributeKey);
-    for (const [name, value] of attributes) {
+const attributeRegistry = new WeakMap<DecoratorMetadataObject, Map<string, string | number | boolean | object>>();
+
+const initializeAttributable = (component: Component, context: ClassDecoratorContext): void => {
+    const attribute = attributeRegistry.get(context.metadata!);
+    if (attribute === undefined) {
+        return;
+    }
+
+    for (const [name, value] of attribute) {
         const parameterized = mustParameterize(name);
         let descriptor: PropertyDescriptor | undefined;
 
@@ -29,7 +33,7 @@ export const initializeAttributable = (component: Component): void => {
         }
 
         if (descriptor === undefined) {
-            throw new TypeError(`The type of the provided default value "${value} is not supported`);
+            throw new TypeError(`The type for "${value} is not supported`);
         }
 
         Object.defineProperty(component, name, descriptor);
@@ -111,33 +115,43 @@ const objectDescriptor = (parameterized: string): PropertyDescriptor => {
     };
 };
 
-export function attributable(...args: any[]): any {
-    const [component, context] = args as [ComponentConstructor, ClassDecoratorContext];
-
+export const attributable = (): any => (constructor: ComponentConstructor, context: ClassDecoratorContext) => {
     if (context.kind !== 'class') {
         throw new TypeError('The @attributable decorator is for use on classes only.');
     }
 
-    return class extends component {
+    return class extends constructor {
         mountCallback() {
-            initializeAttributable(this);
+            initializeAttributable(this, context);
             super.mountCallback();
         }
     };
-}
+};
 
-export function attribute(...args: any[]): any {
-    const [_, context] = args as [unknown, ClassFieldDecoratorContext];
-
-    if (context.kind !== 'field') {
-        throw new TypeError('The @attribute decorator is for use on properties only.');
-    }
-
-    return function (value: any) {
-        if (value === undefined) {
-            throw new Error(`Field "${String(context.name)}" needs to have an initial value.`);
+export const attribute =
+    (options: {
+        readonly type:
+            | StringConstructor
+            | NumberConstructor
+            | BooleanConstructor
+            | ArrayConstructor
+            | ObjectConstructor;
+    }): any =>
+    (_: unknown, context: ClassFieldDecoratorContext) => {
+        if (context.kind !== 'field') {
+            throw new TypeError('The @attribute decorator is for use on properties only.');
         }
 
-        meta(Object.getPrototypeOf(this), attributeKey).set(context.name.toString(), value);
+        return (value: any) => {
+            if (value !== undefined && value.constructor !== options.type) {
+                throw new TypeError('The initial value of the attribute does not match the declared type.');
+            }
+
+            let attribute = attributeRegistry.get(context.metadata!);
+            if (attribute === undefined) {
+                attributeRegistry.set(context.metadata!, (attribute = new Map()));
+            }
+
+            attribute.set(context.name.toString(), value ?? new options.type().valueOf());
+        };
     };
-}
