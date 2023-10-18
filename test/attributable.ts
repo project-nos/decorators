@@ -10,7 +10,7 @@ import { Component } from '../src/component.js';
 import { attributable, attribute } from '../src/attributable.js';
 
 describe('initialization', () => {
-    @attributable
+    @attributable()
     class InitializeAttributeTest extends HTMLElement implements Component {
         @attribute
         testNumber = 123;
@@ -120,7 +120,7 @@ describe('initialization', () => {
 });
 
 describe('boolean casting', () => {
-    @attributable
+    @attributable()
     class BooleanAttributeTest extends HTMLElement implements Component {
         @attribute
         testBool = false;
@@ -156,7 +156,7 @@ describe('boolean casting', () => {
 });
 
 describe('naming', () => {
-    @attributable
+    @attributable()
     class NamingAttributableTest extends HTMLElement implements Component {
         @attribute
         fooBarBazBing = 'fooBarBazBing';

@@ -111,9 +111,7 @@ const objectDescriptor = (parameterized: string): PropertyDescriptor => {
     };
 };
 
-export function attributable(...args: any[]): any {
-    const [component, context] = args as [ComponentConstructor, ClassDecoratorContext];
-
+export const attributable = (): any => (component: ComponentConstructor, context: ClassDecoratorContext) => {
     if (context.kind !== 'class') {
         throw new TypeError('The @attributable decorator is for use on classes only.');
     }
@@ -124,7 +122,7 @@ export function attributable(...args: any[]): any {
             super.mountCallback();
         }
     };
-}
+};
 
 export function attribute(...args: any[]): any {
     const [_, context] = args as [unknown, ClassFieldDecoratorContext];

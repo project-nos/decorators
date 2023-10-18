@@ -54,9 +54,7 @@ const initializeTargetable = (component: Component): void => {
     }
 };
 
-export function targetable(...args: any[]): any {
-    const [component, context] = args as [ComponentConstructor, ClassDecoratorContext];
-
+export const targetable = (): any => (component: ComponentConstructor, context: ClassDecoratorContext) => {
     if (context.kind !== 'class') {
         throw new TypeError('The @targetable decorator is for use on classes only.');
     }
@@ -67,7 +65,7 @@ export function targetable(...args: any[]): any {
             super.mountCallback();
         }
     };
-}
+};
 
 export function target(...args: any[]): any {
     const [_, context] = args as [unknown, ClassFieldDecoratorContext];

@@ -120,17 +120,14 @@ const initializeActionable = (component: Component): void => {
     observeElements(component);
 };
 
-export function actionable(...args: any[]): any {
-    const [component, context] = args as [ComponentConstructor, ClassDecoratorContext];
-
+export const actionable = (): any => (component: ComponentConstructor, context: ClassDecoratorContext) => {
     if (context.kind !== 'class') {
         throw new TypeError('The @actionable decorator is for use on classes only.');
     }
-
     return class extends component {
         mountCallback() {
             initializeActionable(this);
             super.mountCallback();
         }
     };
-}
+};
