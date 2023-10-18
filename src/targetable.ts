@@ -7,8 +7,8 @@
 
 import { Component, ComponentConstructor } from './component.js';
 
-const targetMap = new WeakMap<DecoratorMetadataObject, string[]>();
-const targetsMap = new WeakMap<DecoratorMetadataObject, string[]>();
+const targetRegistry = new WeakMap<DecoratorMetadataObject, string[]>();
+const targetsRegistry = new WeakMap<DecoratorMetadataObject, string[]>();
 
 const findTargetElement = (component: Component, name: string): Element | undefined => {
     const customElementTag = component.tagName.toLowerCase();
@@ -34,7 +34,7 @@ const findTargetElements = (component: Component, name: string): Element[] => {
 };
 
 const initializeTargetable = (component: Component, context: ClassDecoratorContext): void => {
-    const target = targetMap.get(context.metadata!);
+    const target = targetRegistry.get(context.metadata!);
     if (target !== undefined) {
         for (const name of target) {
             Object.defineProperty(component, name, {
@@ -46,7 +46,7 @@ const initializeTargetable = (component: Component, context: ClassDecoratorConte
         }
     }
 
-    const targets = targetsMap.get(context.metadata!);
+    const targets = targetsRegistry.get(context.metadata!);
     if (targets !== undefined) {
         for (const name of targets) {
             Object.defineProperty(component, name, {
@@ -78,9 +78,9 @@ export const target = (): any => (_: unknown, context: ClassFieldDecoratorContex
     }
 
     return () => {
-        let target = targetMap.get(context.metadata!);
+        let target = targetRegistry.get(context.metadata!);
         if (target === undefined) {
-            targetMap.set(context.metadata!, (target = []));
+            targetRegistry.set(context.metadata!, (target = []));
         }
 
         target.push(context.name.toString());
@@ -93,9 +93,9 @@ export const targets = (): any => (_: unknown, context: ClassFieldDecoratorConte
     }
 
     return () => {
-        let targets = targetsMap.get(context.metadata!);
+        let targets = targetsRegistry.get(context.metadata!);
         if (targets === undefined) {
-            targetsMap.set(context.metadata!, (targets = []));
+            targetsRegistry.set(context.metadata!, (targets = []));
         }
 
         targets.push(context.name.toString());

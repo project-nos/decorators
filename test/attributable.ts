@@ -12,19 +12,19 @@ import { attributable, attribute } from '../src/attributable.js';
 describe('initialization', () => {
     @attributable()
     class InitializeAttributeTest extends HTMLElement implements Component {
-        @attribute
+        @attribute({ type: Number })
         testNumber = 123;
 
-        @attribute
+        @attribute({ type: Boolean })
         testBool = false;
 
-        @attribute
+        @attribute({ type: String })
         testString = 'foo';
 
-        @attribute
+        @attribute({ type: Array })
         testArray = [1, 2, 3];
 
-        @attribute
+        @attribute({ type: Object })
         testObject = { foo: 'bar' };
 
         mountCallback(): void {}
@@ -122,7 +122,7 @@ describe('initialization', () => {
 describe('boolean casting', () => {
     @attributable()
     class BooleanAttributeTest extends HTMLElement implements Component {
-        @attribute
+        @attribute({ type: Boolean })
         testBool = false;
 
         mountCallback(): void {}
@@ -158,13 +158,13 @@ describe('boolean casting', () => {
 describe('naming', () => {
     @attributable()
     class NamingAttributableTest extends HTMLElement implements Component {
-        @attribute
+        @attribute({ type: String })
         fooBarBazBing = 'fooBarBazBing';
 
-        @attribute
+        @attribute({ type: String })
         URLBar = 'URLBar';
 
-        @attribute
+        @attribute({ type: String })
         ClipX = 'ClipX';
 
         mountCallback() {}
