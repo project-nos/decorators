@@ -5,8 +5,10 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import { meta, targetKey, targetsKey } from './meta.js';
 import { Component, ComponentConstructor } from './component.js';
+
+const targetMap = new WeakMap<DecoratorMetadataObject, string[]>();
+const targetsMap = new WeakMap<DecoratorMetadataObject, string[]>();
 
 const findTargetElement = (component: Component, name: string): Element | undefined => {
     const customElementTag = component.tagName.toLowerCase();
@@ -31,70 +33,71 @@ const findTargetElements = (component: Component, name: string): Element[] => {
     return elements;
 };
 
-const initializeTargetable = (component: Component): void => {
-    const proto = Object.getPrototypeOf(component);
-    const target = meta(proto, targetKey);
-    for (const [name] of target) {
-        Object.defineProperty(component, name, {
-            configurable: true,
-            get: function (): Element | undefined {
-                return findTargetElement(component, name);
-            },
-        });
+const initializeTargetable = (component: Component, context: ClassDecoratorContext): void => {
+    const target = targetMap.get(context.metadata!);
+    if (target !== undefined) {
+        for (const name of target) {
+            Object.defineProperty(component, name, {
+                configurable: true,
+                get: function (): Element | undefined {
+                    return findTargetElement(component, name);
+                },
+            });
+        }
     }
 
-    const targets = meta(proto, targetsKey);
-    for (const [name] of targets) {
-        Object.defineProperty(component, name, {
-            configurable: true,
-            get: function (): Element[] {
-                return findTargetElements(component, name);
-            },
-        });
+    const targets = targetsMap.get(context.metadata!);
+    if (targets !== undefined) {
+        for (const name of targets) {
+            Object.defineProperty(component, name, {
+                configurable: true,
+                get: function (): Element[] {
+                    return findTargetElements(component, name);
+                },
+            });
+        }
     }
 };
 
-export const targetable = (): any => (component: ComponentConstructor, context: ClassDecoratorContext) => {
+export const targetable = (): any => (constructor: ComponentConstructor, context: ClassDecoratorContext) => {
     if (context.kind !== 'class') {
         throw new TypeError('The @targetable decorator is for use on classes only.');
     }
 
-    return class extends component {
+    return class extends constructor {
         mountCallback() {
-            initializeTargetable(this);
+            initializeTargetable(this, context);
             super.mountCallback();
         }
     };
 };
 
-export function target(...args: any[]): any {
-    const [_, context] = args as [unknown, ClassFieldDecoratorContext];
-
+export const target = (): any => (_: unknown, context: ClassFieldDecoratorContext) => {
     if (context.kind !== 'field') {
         throw new TypeError('The @target decorator is for use on properties only.');
     }
 
-    return function (value: any) {
-        if (value !== undefined) {
-            throw new Error(`Field "${String(context.name)}" cannot have an initial value.`);
+    return () => {
+        let target = targetMap.get(context.metadata!);
+        if (target === undefined) {
+            targetMap.set(context.metadata!, (target = []));
         }
 
-        meta(Object.getPrototypeOf(this), targetKey).set(context.name.toString(), undefined);
+        target.push(context.name.toString());
     };
-}
+};
 
-export function targets(...args: any[]): any {
-    const [_, context] = args as [unknown, ClassFieldDecoratorContext];
-
+export const targets = (): any => (_: unknown, context: ClassFieldDecoratorContext) => {
     if (context.kind !== 'field') {
         throw new TypeError('The @targets decorator is for use on properties only.');
     }
 
-    return function (value: any) {
-        if (value !== undefined) {
-            throw new Error(`Field "${String(context.name)}" cannot have an initial value.`);
+    return () => {
+        let targets = targetsMap.get(context.metadata!);
+        if (targets === undefined) {
+            targetsMap.set(context.metadata!, (targets = []));
         }
 
-        meta(Object.getPrototypeOf(this), targetsKey).set(context.name.toString(), undefined);
+        targets.push(context.name.toString());
     };
-}
+};

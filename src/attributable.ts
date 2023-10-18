@@ -111,12 +111,12 @@ const objectDescriptor = (parameterized: string): PropertyDescriptor => {
     };
 };
 
-export const attributable = (): any => (component: ComponentConstructor, context: ClassDecoratorContext) => {
+export const attributable = (): any => (constructor: ComponentConstructor, context: ClassDecoratorContext) => {
     if (context.kind !== 'class') {
         throw new TypeError('The @attributable decorator is for use on classes only.');
     }
 
-    return class extends component {
+    return class extends constructor {
         mountCallback() {
             initializeAttributable(this);
             super.mountCallback();
