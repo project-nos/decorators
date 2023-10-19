@@ -120,7 +120,7 @@ const initializeActionable = (component: Component): void => {
     observeElements(component);
 };
 
-export const actionable = (): any => (constructor: ComponentConstructor, context: ClassDecoratorContext) => {
+export const actionable = () => (constructor: ComponentConstructor, context: ClassDecoratorContext) => {
     if (context.kind !== 'class') {
         throw new TypeError('The @actionable decorator is for use on classes only.');
     }

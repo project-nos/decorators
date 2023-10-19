@@ -7,16 +7,10 @@
 
 import { Component, ComponentConstructor } from './component.js';
 import { mustParameterize } from './parameterize.js';
+import { attributeRegistry } from './registry.js';
 
-const attributeRegistry = new WeakMap<DecoratorMetadataObject, Map<string, string | number | boolean | object>>();
-
-const initializeAttributable = (component: Component, context: ClassDecoratorContext): void => {
-    const attribute = attributeRegistry.get(context.metadata!);
-    if (attribute === undefined) {
-        return;
-    }
-
-    for (const [name, value] of attribute) {
+const initializeAttributable = (component: Component, metadata: DecoratorMetadataObject): void => {
+    for (const [name, value] of attributeRegistry(metadata).all()) {
         const parameterized = mustParameterize(name);
         let descriptor: PropertyDescriptor | undefined;
 
@@ -115,29 +109,25 @@ const objectDescriptor = (parameterized: string): PropertyDescriptor => {
     };
 };
 
-export const attributable = (): any => (constructor: ComponentConstructor, context: ClassDecoratorContext) => {
+export const attributable = () => (constructor: ComponentConstructor, context: ClassDecoratorContext) => {
     if (context.kind !== 'class') {
         throw new TypeError('The @attributable decorator is for use on classes only.');
     }
 
     return class extends constructor {
         mountCallback() {
-            initializeAttributable(this, context);
+            initializeAttributable(this, context.metadata!);
             super.mountCallback();
         }
     };
 };
 
-export const attribute =
-    (options: {
-        readonly type:
-            | StringConstructor
-            | NumberConstructor
-            | BooleanConstructor
-            | ArrayConstructor
-            | ObjectConstructor;
-    }): any =>
-    (_: unknown, context: ClassFieldDecoratorContext) => {
+interface AttributeOptions {
+    readonly type: StringConstructor | NumberConstructor | BooleanConstructor | ArrayConstructor | ObjectConstructor;
+}
+
+export const attribute = (options: AttributeOptions) => {
+    return (_: unknown, context: ClassFieldDecoratorContext) => {
         if (context.kind !== 'field') {
             throw new TypeError('The @attribute decorator is for use on properties only.');
         }
@@ -147,11 +137,7 @@ export const attribute =
                 throw new TypeError('The initial value of the attribute does not match the declared type.');
             }
 
-            let attribute = attributeRegistry.get(context.metadata!);
-            if (attribute === undefined) {
-                attributeRegistry.set(context.metadata!, (attribute = new Map()));
-            }
-
-            attribute.set(context.name.toString(), value ?? new options.type().valueOf());
+            attributeRegistry(context.metadata!).push(context.name.toString(), value ?? new options.type().valueOf());
         };
     };
+};
