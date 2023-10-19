@@ -132,6 +132,7 @@ export const attribute = (options: AttributeOptions) => {
             throw new TypeError('The @attribute decorator is for use on properties only.');
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return (value: any) => {
             if (value !== undefined && value.constructor !== options.type) {
                 throw new TypeError('The initial value of the attribute does not match the declared type.');

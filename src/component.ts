@@ -10,5 +10,6 @@ export interface Component extends HTMLElement {
 }
 
 export interface ComponentConstructor {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     new (...args: any[]): Component;
 }
