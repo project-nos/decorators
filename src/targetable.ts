@@ -51,7 +51,8 @@ const initializeTargetable = (component: Component, metadata: DecoratorMetadataO
     }
 };
 
-export const targetable = () => (constructor: ComponentConstructor, context: ClassDecoratorContext) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const targetable = (): any => (constructor: ComponentConstructor, context: ClassDecoratorContext) => {
     if (context.kind !== 'class') {
         throw new TypeError('The @targetable decorator is for use on classes only.');
     }
@@ -64,7 +65,8 @@ export const targetable = () => (constructor: ComponentConstructor, context: Cla
     };
 };
 
-export const target = () => (_: unknown, context: ClassFieldDecoratorContext) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const target = (): any => (_: unknown, context: ClassFieldDecoratorContext) => {
     if (context.kind !== 'field') {
         throw new TypeError('The @target decorator is for use on properties only.');
     }
@@ -74,7 +76,8 @@ export const target = () => (_: unknown, context: ClassFieldDecoratorContext) =>
     };
 };
 
-export const targets = () => (_: unknown, context: ClassFieldDecoratorContext) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const targets = (): any => (_: unknown, context: ClassFieldDecoratorContext) => {
     if (context.kind !== 'field') {
         throw new TypeError('The @targets decorator is for use on properties only.');
     }

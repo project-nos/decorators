@@ -120,14 +120,17 @@ const initializeActionable = (component: Component): void => {
     observeElements(component);
 };
 
-export const actionable = () => (constructor: ComponentConstructor, context: ClassDecoratorContext) => {
-    if (context.kind !== 'class') {
-        throw new TypeError('The @actionable decorator is for use on classes only.');
-    }
-    return class extends constructor {
-        mountCallback() {
-            initializeActionable(this);
-            super.mountCallback();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const actionable = (): any => {
+    return (constructor: ComponentConstructor, context: ClassDecoratorContext) => {
+        if (context.kind !== 'class') {
+            throw new TypeError('The @actionable decorator is for use on classes only.');
         }
+        return class extends constructor {
+            mountCallback() {
+                initializeActionable(this);
+                super.mountCallback();
+            }
+        };
     };
 };

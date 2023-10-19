@@ -109,7 +109,8 @@ const objectDescriptor = (parameterized: string): PropertyDescriptor => {
     };
 };
 
-export const attributable = () => (constructor: ComponentConstructor, context: ClassDecoratorContext) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const attributable = (): any => (constructor: ComponentConstructor, context: ClassDecoratorContext) => {
     if (context.kind !== 'class') {
         throw new TypeError('The @attributable decorator is for use on classes only.');
     }
@@ -126,7 +127,8 @@ interface AttributeOptions {
     readonly type: StringConstructor | NumberConstructor | BooleanConstructor | ArrayConstructor | ObjectConstructor;
 }
 
-export const attribute = (options: AttributeOptions) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const attribute = (options: AttributeOptions): any => {
     return (_: unknown, context: ClassFieldDecoratorContext) => {
         if (context.kind !== 'field') {
             throw new TypeError('The @attribute decorator is for use on properties only.');
