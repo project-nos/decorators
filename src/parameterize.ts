@@ -18,5 +18,6 @@ export const mustParameterize = (key: PropertyKey): string => {
     if (!transformed.includes('-')) {
         throw new DOMException(`${String(key)} is not a valid name`, 'SyntaxError');
     }
+
     return transformed;
 };

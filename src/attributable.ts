@@ -7,77 +7,134 @@
 
 import { Component, ComponentConstructor } from './component.js';
 import { mustParameterize } from './parameterize.js';
-import { attributeRegistry } from './registry.js';
 
-const initializeAttributable = (component: Component, metadata: DecoratorMetadataObject): void => {
-    for (const [name, value] of attributeRegistry(metadata).all()) {
+type TypeHint = StringConstructor | NumberConstructor | BooleanConstructor | ArrayConstructor | ObjectConstructor;
+
+const attributeMetadata = new WeakMap<DecoratorMetadataObject, Map<string, TypeHint>>();
+
+const findPropertyDescriptor = (instance: unknown, key: PropertyKey): PropertyDescriptor | undefined => {
+    while (instance) {
+        const descriptor = Object.getOwnPropertyDescriptor(instance, key);
+        if (descriptor) {
+            return descriptor;
+        }
+
+        instance = Object.getPrototypeOf(instance);
+    }
+};
+
+type GetCallback = () => unknown;
+type SetCallback = (v: unknown) => void;
+
+const initializeAttributable = (component: Component, metadata: DecoratorMetadataObject) => {
+    for (const [name, type] of attributeMetadata.get(metadata) || []) {
+        const access = findPropertyDescriptor(component, name) || {
+            value: void 0,
+            configurable: true,
+            writable: true,
+            enumerable: true,
+        };
+
+        let value: unknown;
+        if (access.get) {
+            value = access.get.call(component);
+        } else if ('value' in access) {
+            value = access.value;
+        }
+
+        const getCallback: GetCallback = access.get || (() => value);
+        const setCallback: SetCallback = access.set || ((v: unknown) => v);
         const parameterized = mustParameterize(name);
-        let descriptor: PropertyDescriptor | undefined;
 
-        if (typeof value === 'number') {
-            descriptor = numberDescriptor(parameterized);
-        } else if (typeof value === 'boolean') {
-            descriptor = booleanDescriptor(parameterized);
-        } else if (typeof value === 'string') {
-            descriptor = stringDescriptor(parameterized);
-        } else if (typeof value === 'object' && Array.isArray(value)) {
-            descriptor = arrayDescriptor(parameterized);
-        } else if (typeof value === 'object' && !Array.isArray(value)) {
-            descriptor = objectDescriptor(parameterized);
+        let descriptor: PropertyDescriptor;
+        switch (type) {
+            case Number:
+                descriptor = numberDescriptor(parameterized, getCallback, setCallback);
+                break;
+            case Boolean:
+                descriptor = booleanDescriptor(parameterized, getCallback, setCallback);
+                break;
+            case String:
+                descriptor = stringDescriptor(parameterized, getCallback, setCallback);
+                break;
+            case Array:
+                descriptor = arrayDescriptor(parameterized, getCallback, setCallback);
+                break;
+            case Object:
+                descriptor = objectDescriptor(parameterized, getCallback, setCallback);
+                break;
+            default:
+                throw new TypeError(`Type "${type.name} is not supported`);
         }
 
-        if (descriptor === undefined) {
-            throw new TypeError(`The type for "${value} is not supported`);
-        }
-
-        Object.defineProperty(component, name, descriptor);
-        if (name in component && !component.hasAttribute(parameterized)) {
+        Object.defineProperty(component, name, Object.assign({ configurable: true, enumerable: true }, descriptor));
+        if (value !== undefined && name in component && !component.hasAttribute(parameterized)) {
             descriptor.set!.call(component, value);
         }
     }
 };
 
-const numberDescriptor = (parameterized: string): PropertyDescriptor => {
+const numberDescriptor = (name: string, getCallback: GetCallback, setCallback: SetCallback): PropertyDescriptor => {
     return {
-        configurable: true,
         get: function (this: Component): number {
-            return Number(this.getAttribute(parameterized) || 0);
+            if (!this.hasAttribute(name)) {
+                return Number(getCallback.call(this) || 0);
+            }
+
+            return Number(this.getAttribute(name) || 0);
         },
         set: function (this: Component, fresh: string) {
-            this.setAttribute(parameterized, fresh);
+            this.setAttribute(name, fresh);
+
+            if (!Object.is(Number(getCallback.call(this) || 0), fresh)) {
+                setCallback.call(this, fresh);
+            }
         },
     };
 };
 
-const booleanDescriptor = (parameterized: string): PropertyDescriptor => {
+const booleanDescriptor = (name: string, getCallback: GetCallback, setCallback: SetCallback): PropertyDescriptor => {
     return {
-        configurable: true,
         get: function (this: Component): boolean {
-            return this.hasAttribute(parameterized);
+            return this.hasAttribute(name);
         },
         set: function (this: Component, fresh: boolean) {
-            this.toggleAttribute(parameterized, fresh);
+            this.toggleAttribute(name, fresh);
+
+            if (!Object.is(Boolean(getCallback.call(this) || false), fresh)) {
+                setCallback.call(this, fresh);
+            }
         },
     };
 };
 
-const stringDescriptor = (parameterized: string): PropertyDescriptor => {
+const stringDescriptor = (name: string, getCallback: GetCallback, setCallback: SetCallback): PropertyDescriptor => {
     return {
-        configurable: true,
         get: function (this: Component): string {
-            return this.getAttribute(parameterized) || '';
+            if (!this.hasAttribute(name)) {
+                return String(getCallback.call(this) || '');
+            }
+
+            return String(this.getAttribute(name) || '');
         },
         set: function (this: Component, fresh: string) {
-            this.setAttribute(parameterized, fresh || '');
+            this.setAttribute(name, fresh);
+
+            if (!Object.is(String(getCallback.call(this) || ''), fresh)) {
+                setCallback.call(this, fresh);
+            }
         },
     };
 };
 
-const arrayDescriptor = (parameterized: string): PropertyDescriptor => {
+const arrayDescriptor = (name: string, getCallback: GetCallback, setCallback: SetCallback): PropertyDescriptor => {
     return {
-        configurable: true,
         get: function (this: Component): object {
-            const value = JSON.parse(this.getAttribute(parameterized) || '[]');
+            if (!this.hasAttribute(name)) {
+                return Array(getCallback.call(this) || []);
+            }
+
+            const value = JSON.parse(this.getAttribute(name) || '[]');
 
             if (value === null || typeof value !== 'object' || !Array.isArray(value)) {
                 throw new TypeError(`Expected value of type "array" but instead got value "${value}"`);
@@ -86,16 +143,23 @@ const arrayDescriptor = (parameterized: string): PropertyDescriptor => {
             return value;
         },
         set: function (this: Component, fresh: object) {
-            this.setAttribute(parameterized, JSON.stringify(fresh || []));
+            this.setAttribute(name, JSON.stringify(fresh || []));
+
+            if (!Object.is(Array(getCallback.call(this) || []), fresh)) {
+                setCallback.call(this, fresh);
+            }
         },
     };
 };
 
-const objectDescriptor = (parameterized: string): PropertyDescriptor => {
+const objectDescriptor = (name: string, getCallback: GetCallback, setCallback: SetCallback): PropertyDescriptor => {
     return {
-        configurable: true,
         get: function (this: Component): object {
-            const value = JSON.parse(this.getAttribute(parameterized) || '{}');
+            if (!this.hasAttribute(name)) {
+                return Object(getCallback.call(this) || {});
+            }
+
+            const value = JSON.parse(this.getAttribute(name) || '{}');
 
             if (value === null || typeof value !== 'object' || Array.isArray(value)) {
                 throw new TypeError(`Expected value of type "object" but instead got value "${value}"`);
@@ -104,43 +168,59 @@ const objectDescriptor = (parameterized: string): PropertyDescriptor => {
             return value;
         },
         set: function (this: Component, fresh: object) {
-            this.setAttribute(parameterized, JSON.stringify(fresh || {}));
+            this.setAttribute(name, JSON.stringify(fresh || {}));
+
+            if (!Object.is(Object(getCallback.call(this) || {}), fresh)) {
+                setCallback.call(this, fresh);
+            }
         },
     };
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const attributable = (): any => (constructor: ComponentConstructor, context: ClassDecoratorContext) => {
-    if (context.kind !== 'class') {
-        throw new TypeError('The @attributable decorator is for use on classes only.');
-    }
+type AttributableContext = ClassDecoratorContext & {
+    metadata: DecoratorMetadataObject;
+};
 
-    return class extends constructor {
-        mountCallback() {
-            initializeAttributable(this, context.metadata!);
-            super.mountCallback();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const attributable = (): any => {
+    return (constructor: ComponentConstructor, context: AttributableContext) => {
+        const { kind, metadata } = context;
+
+        if (kind !== 'class') {
+            throw new TypeError('The @attributable decorator is for use on classes only.');
         }
+
+        return class extends constructor {
+            mountCallback() {
+                initializeAttributable(this, metadata);
+                super.mountCallback();
+            }
+        };
     };
 };
 
 interface AttributeOptions {
-    readonly type: StringConstructor | NumberConstructor | BooleanConstructor | ArrayConstructor | ObjectConstructor;
+    readonly type: TypeHint;
 }
 
+type AttributeContext<T, V> = (ClassFieldDecoratorContext<T, V> | ClassSetterDecoratorContext<T, V>) & {
+    metadata: DecoratorMetadataObject;
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const attribute = (options: AttributeOptions): any => {
-    return (_: unknown, context: ClassFieldDecoratorContext) => {
-        if (context.kind !== 'field') {
-            throw new TypeError('The @attribute decorator is for use on properties only.');
+export const attribute = <T extends Component, V>(options: AttributeOptions): any => {
+    return (_: undefined, context: AttributeContext<T, V>) => {
+        const { kind, name, metadata } = context;
+
+        if (kind !== 'field' && kind !== 'setter') {
+            throw new TypeError('The @attribute decorator is for use on fields and setters only.');
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return (value: any) => {
-            if (value !== undefined && value.constructor !== options.type) {
-                throw new TypeError('The initial value of the attribute does not match the declared type.');
-            }
+        let attributes = attributeMetadata.get(metadata);
+        if (attributes === undefined) {
+            attributeMetadata.set(metadata, (attributes = new Map()));
+        }
 
-            attributeRegistry(context.metadata!).push(context.name.toString(), value ?? new options.type().valueOf());
-        };
+        attributes.set(name.toString(), options.type);
     };
 };
