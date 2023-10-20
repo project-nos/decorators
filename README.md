@@ -16,7 +16,7 @@ There is no better way to get a feel for what NOS decorators is and what it can 
 Imagine you create a hello-world component which generates following html:
 
 ```html
-<hello-world some-number="123" some-boolean some-string="baz" some-array="[4,5,6]" some-object="{"foo":"bar"}">
+<hello-world some-number="123" some-boolean some-string="baz" some-array="[4,5,6]" some-object="{"foo":"bar"}" some-getter-setter="bar">
   <button hello-world-action="click#foo" hello-world-target="bar">…</button>
   <div hello-world-targets="bazs">...</div>
   <div hello-world-targets="bazs">...</div>
@@ -30,30 +30,41 @@ You no longer need to query for elements inside your `init` function, listen for
 import Component from 'ShopUi/models/component';
 import { actionable, attributable, attribute, targetable, target, targets } from '@project-nos/decorators';
 
-@actionable
-@attributable
-@targetable
+@actionable()
+@attributable()
+@targetable()
 export default class HelloWorld extends Component {
-    @attribute
-    private someNumber = Number();
+    @attribute({ type: Number })
+    protected declare someNumber: number;
 
-    @attribute
-    private someBoolean = Boolean();
+    @attribute({ type: Boolean })
+    protected declare someBoolean: boolean;
 
-    @attribute
-    private someString = String();
+    @attribute({ type: String })
+    protected declare someString: string;
 
-    @attribute
-    private someArray = Array();
+    @attribute({ type: Array })
+    protected declare someArray: [];
 
-    @attribute
-    private someObject = Object();
+    @attribute({ type: Object })
+    protected declare someObject: object;
+    
+    #someGetterSetter = String();
+    
+    get someGetterSetter(): string {
+        return this.#someGetterSetter;
+    }
+    
+    @attribute({ type: String })
+    set someGetterSetter(value: string) {
+        this.#someGetterSetter = value;
+    }
 
-    @target
-    private declare bar: HTMLButtonElement;
+    @target()
+    protected declare bar: HTMLButtonElement;
 
-    @targets
-    private declare bazs: HTMLDivElement[];
+    @targets()
+    protected declare bazs: HTMLDivElement[];
 
     protected readyCallback(): void {}
 
