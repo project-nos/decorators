@@ -6,7 +6,6 @@
  */
 
 import { Component, ComponentConstructor } from './component.js';
-import { targetRegistry, targetsRegistry } from './registry.js';
 
 const findTargetElement = (component: Component, name: string): Element | undefined => {
     const customElementTag = component.tagName.toLowerCase();
@@ -31,8 +30,11 @@ const findTargetElements = (component: Component, name: string): Element[] => {
     return elements;
 };
 
+const targetMetadata = new WeakMap<DecoratorMetadataObject, Set<string>>();
+const targetsMetadata = new WeakMap<DecoratorMetadataObject, Set<string>>();
+
 const initializeTargetable = (component: Component, metadata: DecoratorMetadataObject): void => {
-    for (const name of targetRegistry(metadata).all()) {
+    for (const name of targetMetadata.get(metadata) || []) {
         Object.defineProperty(component, name, {
             configurable: true,
             get: function (): Element | undefined {
@@ -41,7 +43,7 @@ const initializeTargetable = (component: Component, metadata: DecoratorMetadataO
         });
     }
 
-    for (const name of targetsRegistry(metadata).all()) {
+    for (const name of targetsMetadata.get(metadata) || []) {
         Object.defineProperty(component, name, {
             configurable: true,
             get: function (): Element[] {
@@ -51,38 +53,68 @@ const initializeTargetable = (component: Component, metadata: DecoratorMetadataO
     }
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const targetable = (): any => (constructor: ComponentConstructor, context: ClassDecoratorContext) => {
-    if (context.kind !== 'class') {
-        throw new TypeError('The @targetable decorator is for use on classes only.');
-    }
+type TargetableContext = ClassDecoratorContext & {
+    metadata: DecoratorMetadataObject;
+};
 
-    return class extends constructor {
-        mountCallback() {
-            initializeTargetable(this, context.metadata!);
-            super.mountCallback();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const targetable = (): any => {
+    return (constructor: ComponentConstructor, context: TargetableContext) => {
+        const { kind, metadata } = context;
+
+        if (kind !== 'class') {
+            throw new TypeError('The @targetable decorator is for use on classes only.');
         }
+
+        return class extends constructor {
+            mountCallback() {
+                initializeTargetable(this, metadata);
+                super.mountCallback();
+            }
+        };
     };
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const target = (): any => (_: unknown, context: ClassFieldDecoratorContext) => {
-    if (context.kind !== 'field') {
-        throw new TypeError('The @target decorator is for use on properties only.');
-    }
-
-    return () => {
-        targetRegistry(context.metadata!).push(context.name.toString());
-    };
+type TargetContext<T, V> = ClassFieldDecoratorContext<T, V> & {
+    metadata: DecoratorMetadataObject;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const targets = (): any => (_: unknown, context: ClassFieldDecoratorContext) => {
-    if (context.kind !== 'field') {
-        throw new TypeError('The @targets decorator is for use on properties only.');
-    }
+export const target = <T extends Component, V>(): any => {
+    return (_: unknown, context: TargetContext<T, V>) => {
+        const { kind, name, metadata } = context;
 
-    return () => {
-        targetsRegistry(context.metadata!).push(context.name.toString());
+        if (kind !== 'field') {
+            throw new TypeError('The @target decorator is for use on fields only.');
+        }
+
+        let targets = targetMetadata.get(metadata);
+        if (targets === undefined) {
+            targetMetadata.set(metadata, (targets = new Set()));
+        }
+
+        targets.add(name.toString());
+    };
+};
+
+type TargetsContext<T, V> = ClassFieldDecoratorContext<T, V> & {
+    metadata: DecoratorMetadataObject;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const targets = <T extends Component, V>(): any => {
+    return (_: unknown, context: TargetsContext<T, V>) => {
+        const { kind, name, metadata } = context;
+
+        if (kind !== 'field') {
+            throw new TypeError('The @targets decorator is for use on fields only.');
+        }
+
+        let targets = targetsMetadata.get(metadata);
+        if (targets === undefined) {
+            targetsMetadata.set(metadata, (targets = new Set()));
+        }
+
+        targets.add(name.toString());
     };
 };

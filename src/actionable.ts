@@ -123,7 +123,9 @@ const initializeActionable = (component: Component): void => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const actionable = (): any => {
     return (constructor: ComponentConstructor, context: ClassDecoratorContext) => {
-        if (context.kind !== 'class') {
+        const { kind } = context;
+
+        if (kind !== 'class') {
             throw new TypeError('The @actionable decorator is for use on classes only.');
         }
         return class extends constructor {
