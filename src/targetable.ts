@@ -5,17 +5,19 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const findTarget = (element: HTMLElement, name: string): Element | undefined => {
+const findTarget = <T extends HTMLElement, V extends Element | null>(element: T, name: string): V => {
     const tagName = element.tagName.toLowerCase();
 
     for (const candidate of element.querySelectorAll(`[${tagName}-target~="${name}"]`)) {
         if (candidate.closest(tagName) === element) {
-            return candidate;
+            return candidate as V;
         }
     }
+
+    return null as V;
 };
 
-const findTargets = (element: HTMLElement, name: string): Element[] => {
+const findTargets = <T extends HTMLElement, V extends Element[]>(element: T, name: string): V => {
     const tagName = element.tagName.toLowerCase();
     const targets = [];
 
@@ -25,38 +27,38 @@ const findTargets = (element: HTMLElement, name: string): Element[] => {
         }
     }
 
-    return targets;
+    return targets as V;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const target = <T extends HTMLElement, V>(): any => {
-    return (_: unknown, context: ClassAccessorDecoratorContext<T, V>): ClassAccessorDecoratorResult<T, V> => {
-        const { kind, name } = context;
+type TargetDecorator<T, V> = {
+    (
+        value: ClassAccessorDecoratorTarget<T, V>,
+        context: ClassAccessorDecoratorContext<T, V>,
+    ): ClassAccessorDecoratorResult<T, V>;
+};
 
-        if (kind !== 'accessor') {
-            throw new TypeError('The @target decorator is for use on accessors only.');
-        }
-
+export const target = <T extends HTMLElement, V extends Element | null>(): TargetDecorator<T, V> => {
+    return (_, context) => {
         return {
-            get(this: T): V {
-                return findTarget(this, name.toString()) as V;
+            get(this: T) {
+                return findTarget<T, V>(this, context.name.toString());
             },
         };
     };
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const targets = <T extends HTMLElement, V>(): any => {
-    return (_: unknown, context: ClassAccessorDecoratorContext<T, V>): ClassAccessorDecoratorResult<T, V> => {
-        const { kind, name } = context;
+type TargetsDecorator<T, V> = {
+    (
+        value: ClassAccessorDecoratorTarget<T, V>,
+        context: ClassAccessorDecoratorContext<T, V>,
+    ): ClassAccessorDecoratorResult<T, V>;
+};
 
-        if (kind !== 'accessor') {
-            throw new TypeError('The @targets decorator is for use on accessors only.');
-        }
-
+export const targets = <T extends HTMLElement, V extends Element[]>(): TargetsDecorator<T, V> => {
+    return (_, context) => {
         return {
-            get(this: T): V {
-                return findTargets(this, name.toString()) as V;
+            get(this: T) {
+                return findTargets<T, V>(this, context.name.toString());
             },
         };
     };
