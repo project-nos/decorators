@@ -6,7 +6,7 @@
  */
 
 import { expect, fixture, html } from '@open-wc/testing';
-import { attribute } from '../src/attributable.js';
+import { attribute } from '../src/attribute.js';
 
 describe('initialization', () => {
     class InitializeAttributeTest extends HTMLElement {

@@ -6,7 +6,7 @@
  */
 
 import { expect, fixture, html } from '@open-wc/testing';
-import { action } from '../src/actionable.js';
+import { action } from '../src/action.js';
 
 describe('actionable', () => {
     class ActionableTest extends HTMLElement {

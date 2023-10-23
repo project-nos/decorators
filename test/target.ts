@@ -6,7 +6,7 @@
  */
 
 import { expect, fixture, html } from '@open-wc/testing';
-import { target, targets } from '../src/targetable.js';
+import { target, targets } from '../src/target.js';
 
 describe('target', () => {
     class TargetTest extends HTMLElement {

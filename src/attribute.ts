@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import { mustParameterize } from './parameterize.js';
+import { mustParameterize } from './util.js';
 
 type TypeHint = StringConstructor | NumberConstructor | BooleanConstructor | ArrayConstructor | ObjectConstructor;
 
