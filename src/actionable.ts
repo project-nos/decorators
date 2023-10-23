@@ -5,134 +5,85 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import { Component, ComponentConstructor } from './component.js';
-
-const parseActionAttribute = (element: Element): { component: string; event: string; method: string }[] => {
-    const attributeName = element.getAttributeNames().find((name) => name.endsWith('-action'));
-
-    if (!attributeName) {
-        return [];
-    }
-
-    const component = attributeName.slice(0, attributeName.lastIndexOf('-action'));
-    const attributeValue = element.getAttribute(attributeName) || '';
-
-    const actions = [];
-    for (const action of attributeValue.trim().split(/\s+/)) {
+const parseEvents = (element: HTMLElement, dispatcher: Element, name: string): Set<string> => {
+    const actions = new Set<string>();
+    const definition = dispatcher.getAttribute(`${element.tagName.toLowerCase()}-action`) || '';
+    for (const action of definition.trim().split(/\s+/)) {
         if (!action.includes('#')) {
-            throw new Error('Invalid action syntax');
+            throw new Error(`Invalid action syntax "${action}"`);
         }
 
-        const separatorPos = action.lastIndexOf('#');
-        const eventName = action.slice(0, separatorPos) || getDefaultEventNameForElement(element);
-        if (eventName === undefined) {
-            throw new Error('Missing event name');
+        const [event, method] = action.split('#');
+
+        if (!event || !method) {
+            throw new Error(`Invalid action syntax "${action}"`);
         }
 
-        actions.push({
-            component: component,
-            event: eventName,
-            method: action.slice(separatorPos + 1) || 'handleEvent',
-        });
+        if (method !== name) {
+            continue;
+        }
+
+        actions.add(event);
     }
 
     return actions;
 };
 
-const defaultEventNames: { [tagName: string]: (element: Element) => string } = {
-    a: () => 'click',
-    button: () => 'click',
-    form: () => 'submit',
-    details: () => 'toggle',
-    input: (e) => (e.getAttribute('type') == 'submit' ? 'click' : 'input'),
-    select: () => 'change',
-    textarea: () => 'input',
-};
-
-const getDefaultEventNameForElement = (element: Element): string | undefined => {
-    const tagName = element.tagName.toLowerCase();
-    if (tagName in defaultEventNames) {
-        return defaultEventNames[tagName](element);
-    }
-};
-
-const bindActions = (component: Component, element: Element) => {
-    for (const action of parseActionAttribute(element)) {
-        if (action.component !== component.tagName.toLowerCase()) {
-            continue;
-        }
-
-        element.addEventListener(action.event, handleEvent);
-    }
-};
-
-const handleEvent = (event: Event) => {
-    const element = event.currentTarget as Element;
-    for (const action of parseActionAttribute(element)) {
-        if (action.event !== event.type) {
-            continue;
-        }
-
-        type EventDispatcher = HTMLElement & Record<string, (ev: Event) => unknown>;
-        const component = element.closest<EventDispatcher>(action.component);
-        if (!component || typeof component[action.method] !== 'function') {
-            continue;
-        }
-
-        component[action.method](event);
-    }
-};
-
-const bindElements = (component: Component, root: Element) => {
-    for (const element of root.querySelectorAll(`[${component.tagName.toLowerCase()}-action]`)) {
-        bindActions(component, element);
-    }
-
-    if (root instanceof Element && root.hasAttribute(`${component.tagName.toLowerCase()}-action`)) {
-        bindActions(component, root);
-    }
-};
-
-const observeElements = (component: Component) => {
-    const observer = new MutationObserver((mutations) => {
-        for (const mutation of mutations) {
-            if (mutation.type === 'attributes' && mutation.target instanceof Element) {
-                bindElements(component, mutation.target);
-            } else if (mutation.type === 'childList' && mutation.addedNodes.length) {
-                for (const node of mutation.addedNodes) {
-                    if (node instanceof Element) {
-                        bindElements(component, node);
-                    }
-                }
+const bindListeners = (element: HTMLElement, dispatchers: Element[], methodName: string) => {
+    for (const dispatcher of dispatchers) {
+        const events = parseEvents(element, dispatcher, methodName);
+        for (const event of events) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const listener = element[methodName as keyof HTMLElement] as (this: HTMLElement, ...args: any) => any;
+            if (typeof listener !== 'function') {
+                continue;
             }
-        }
-    });
 
-    observer.observe(component, {
-        childList: true,
-        subtree: true,
-        attributeFilter: [`${component.tagName.toLowerCase()}-action`],
-    });
+            dispatcher.addEventListener(event, listener.bind(element));
+        }
+    }
 };
 
-const initializeActionable = (component: Component): void => {
-    bindElements(component, component);
-    observeElements(component);
+const dispatchersMap = new WeakMap<Element, Element[]>();
+
+const locateDispatcher = (element: HTMLElement): Element[] => {
+    const selector = `[${element.tagName.toLowerCase()}-action]`;
+    const dispatchers = [];
+
+    for (const candidate of element.querySelectorAll(selector)) {
+        if (!element.isSameNode(candidate.closest(element.tagName.toLowerCase()))) {
+            continue;
+        }
+
+        dispatchers.push(candidate);
+    }
+
+    if (element instanceof Element && element.matches(selector)) {
+        dispatchers.push(element);
+    }
+
+    return dispatchers;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const actionable = (): any => {
-    return (constructor: ComponentConstructor, context: ClassDecoratorContext) => {
-        const { kind } = context;
+type ActionDecorator<T, V> = {
+    (value: V, context: ClassMethodDecoratorContext<T>): void;
+};
 
-        if (kind !== 'class') {
-            throw new TypeError('The @actionable decorator is for use on classes only.');
+export const action = <T extends HTMLElement, V>(): ActionDecorator<T, V> => {
+    return (_, context) => {
+        const { kind, name } = context;
+
+        if (kind !== 'method') {
+            throw new TypeError('The @action decorator is for use on methods only.');
         }
-        return class extends constructor {
-            mountCallback() {
-                initializeActionable(this);
-                super.mountCallback();
+
+        context.addInitializer(function (this: T) {
+            let dispatchers = dispatchersMap.get(this);
+            if (dispatchers === undefined) {
+                dispatchersMap.set(this, (dispatchers = locateDispatcher(this)));
             }
-        };
+
+            bindListeners(this, dispatchers, name.toString());
+        });
     };
 };

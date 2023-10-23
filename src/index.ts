@@ -7,4 +7,4 @@
 
 export { attribute } from './attributable.js';
 export { target, targets } from './targetable.js';
-export { actionable } from './actionable.js';
+export { action } from './actionable.js';
