@@ -5,6 +5,6 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-export { attributable, attribute } from './attributable.js';
+export { attribute } from './attributable.js';
 export { target, targets } from './targetable.js';
 export { actionable } from './actionable.js';
