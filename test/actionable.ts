@@ -11,7 +11,7 @@ import { Component } from '../src/component.js';
 import { actionable } from '../src/actionable.js';
 
 describe('actionable', () => {
-    @actionable
+    @actionable()
     class ActionableTest extends HTMLElement implements Component {
         foo = fake();
 
