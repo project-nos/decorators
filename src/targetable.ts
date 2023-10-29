@@ -54,49 +54,55 @@ const initializeTargetable = (component: Component): void => {
     }
 };
 
-export function targetable(...args: any[]): any {
-    const [component, context] = args as [ComponentConstructor, ClassDecoratorContext];
+export function targetable(): any {
+    return (...args: any[]) => {
+        const [component, context] = args as [ComponentConstructor, ClassDecoratorContext];
 
-    if (context.kind !== 'class') {
-        throw new TypeError('The @targetable decorator is for use on classes only.');
-    }
-
-    return class extends component {
-        mountCallback() {
-            initializeTargetable(this);
-            super.mountCallback();
+        if (context.kind !== 'class') {
+            throw new TypeError('The @targetable decorator is for use on classes only.');
         }
+
+        return class extends component {
+            mountCallback() {
+                initializeTargetable(this);
+                super.mountCallback();
+            }
+        };
     };
 }
 
-export function target(...args: any[]): any {
-    const [_, context] = args as [unknown, ClassFieldDecoratorContext];
+export function target(): any {
+    return (...args: any[]) => {
+        const [_, context] = args as [unknown, ClassFieldDecoratorContext];
 
-    if (context.kind !== 'field') {
-        throw new TypeError('The @target decorator is for use on properties only.');
-    }
-
-    return function (value: any) {
-        if (value !== undefined) {
-            throw new Error(`Field "${String(context.name)}" cannot have an initial value.`);
+        if (context.kind !== 'field') {
+            throw new TypeError('The @target decorator is for use on properties only.');
         }
 
-        meta(Object.getPrototypeOf(this), targetKey).set(context.name.toString(), undefined);
+        return function (value: any) {
+            if (value !== undefined) {
+                throw new Error(`Field "${String(context.name)}" cannot have an initial value.`);
+            }
+
+            meta(Object.getPrototypeOf(this), targetKey).set(context.name.toString(), undefined);
+        };
     };
 }
 
-export function targets(...args: any[]): any {
-    const [_, context] = args as [unknown, ClassFieldDecoratorContext];
+export function targets(): any {
+    return (...args: any[]) => {
+        const [_, context] = args as [unknown, ClassFieldDecoratorContext];
 
-    if (context.kind !== 'field') {
-        throw new TypeError('The @targets decorator is for use on properties only.');
-    }
-
-    return function (value: any) {
-        if (value !== undefined) {
-            throw new Error(`Field "${String(context.name)}" cannot have an initial value.`);
+        if (context.kind !== 'field') {
+            throw new TypeError('The @targets decorator is for use on properties only.');
         }
 
-        meta(Object.getPrototypeOf(this), targetsKey).set(context.name.toString(), undefined);
+        return function (value: any) {
+            if (value !== undefined) {
+                throw new Error(`Field "${String(context.name)}" cannot have an initial value.`);
+            }
+
+            meta(Object.getPrototypeOf(this), targetsKey).set(context.name.toString(), undefined);
+        };
     };
 }

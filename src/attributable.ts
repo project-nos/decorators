@@ -111,33 +111,47 @@ const objectDescriptor = (parameterized: string): PropertyDescriptor => {
     };
 };
 
-export function attributable(...args: any[]): any {
-    const [component, context] = args as [ComponentConstructor, ClassDecoratorContext];
+export function attributable(): any {
+    return (...args: any[]) => {
+        const [component, context] = args as [ComponentConstructor, ClassDecoratorContext];
 
-    if (context.kind !== 'class') {
-        throw new TypeError('The @attributable decorator is for use on classes only.');
-    }
-
-    return class extends component {
-        mountCallback() {
-            initializeAttributable(this);
-            super.mountCallback();
+        if (context.kind !== 'class') {
+            throw new TypeError('The @attributable decorator is for use on classes only.');
         }
+
+        return class extends component {
+            mountCallback() {
+                initializeAttributable(this);
+                super.mountCallback();
+            }
+        };
     };
 }
 
-export function attribute(...args: any[]): any {
-    const [_, context] = args as [unknown, ClassFieldDecoratorContext];
+type TypeHint = NumberConstructor | BooleanConstructor | StringConstructor | ArrayConstructor | ObjectConstructor;
 
-    if (context.kind !== 'field') {
-        throw new TypeError('The @attribute decorator is for use on properties only.');
-    }
+type AttributeOptions = {
+    type: TypeHint;
+};
 
-    return function (value: any) {
-        if (value === undefined) {
-            throw new Error(`Field "${String(context.name)}" needs to have an initial value.`);
+export function attribute(options: AttributeOptions): any {
+    return (...args: any[]) => {
+        const [_, context] = args as [unknown, ClassFieldDecoratorContext];
+
+        if (context.kind !== 'field') {
+            throw new TypeError('The @attribute decorator is for use on properties only.');
         }
 
-        meta(Object.getPrototypeOf(this), attributeKey).set(context.name.toString(), value);
+        return function (value: any) {
+            const typeHint = new options.type().valueOf();
+            if (value !== undefined && typeof value !== typeof typeHint) {
+                throw new TypeError('The value and type hint do not match.');
+            }
+
+            meta(Object.getPrototypeOf(this), attributeKey).set(
+                context.name.toString(),
+                value === undefined ? typeHint : value,
+            );
+        };
     };
 }

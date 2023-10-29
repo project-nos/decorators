@@ -10,17 +10,17 @@ import { Component } from '../src/component.js';
 import { target, targetable, targets } from '../src/targetable.js';
 
 describe('target', () => {
-    @targetable
+    @targetable()
     class TargetTest extends HTMLElement implements Component {
-        @target
+        @target()
         declare foo: HTMLElement;
 
         bar = 'hello';
 
-        @target
+        @target()
         declare baz: Element;
 
-        @target
+        @target()
         declare bing: Element;
 
         mountCallback(): void {}
@@ -57,14 +57,14 @@ describe('target', () => {
 });
 
 describe('targets', () => {
-    @targetable
+    @targetable()
     class TargetsTest extends HTMLElement implements Component {
-        @targets
+        @targets()
         declare foos: HTMLElement[];
 
         bars = 'hello';
 
-        @targets
+        @targets()
         declare bazs: Element[];
 
         mountCallback(): void {}
