@@ -2,15 +2,14 @@
   "include": ["src", "test"],
   "compilerOptions": {
     "baseUrl": ".",
-    "esModuleInterop": true,
     "experimentalDecorators": true,
-    "lib": ["dom", "dom.iterable"],
-    "module": "esnext",
-    "moduleResolution": "node",
+    "lib": ["es2021", "DOM", "DOM.Iterable", "esnext.decorators"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "noEmit": true,
     "sourceMap": true,
     "strict": true,
-    "target": "es2020",
+    "target": "es2021",
     "noImplicitThis": false
   }
 }
