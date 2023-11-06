@@ -30,11 +30,13 @@ describe('target', () => {
 
     let instance: TargetTest;
     beforeEach(async () => {
-        instance = await fixture(html`<target-test>
-            <div id="el1" target-test-target="foo"></div>
-            <div id="el2" target-test-target="baz"></div>
-            <div id="el3" target-test-target="bar bing"></div>
-        </target-test>`);
+        instance = await fixture(
+            html`<target-test>
+                <div id="el1" target-test-target="foo"></div>
+                <div id="el2" target-test-target="baz"></div>
+                <div id="el3" target-test-target="bar bing"></div>
+            </target-test>`,
+        );
 
         instance.mountCallback();
     });
@@ -74,10 +76,12 @@ describe('targets', () => {
 
     let instance: TargetsTest;
     beforeEach(async () => {
-        instance = await fixture(html`<targets-test>
-            <div id="el1" targets-test-targets="foos"></div>
-            <div id="el2" targets-test-targets="foos bazs"></div>
-        </targets-test>`);
+        instance = await fixture(
+            html`<targets-test>
+                <div id="el1" targets-test-targets="foos"></div>
+                <div id="el2" targets-test-targets="foos bazs"></div>
+            </targets-test>`,
+        );
 
         instance.mountCallback();
     });

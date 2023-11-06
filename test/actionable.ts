@@ -26,14 +26,16 @@ describe('actionable', () => {
 
     let instance: ActionableTest;
     beforeEach(async () => {
-        instance = await fixture(html` <actionable-test actionable-test-action="foo#foo">
-                <div id="el1" actionable-test-action="click#foo"></div>
-                <div id="el2" actionable-test-action="custom:event#foo click#foo"></div>
-                <div id="el3" actionable-test-action="click#baz focus#foo submit#foo"></div>
-                <div id="el4" actionable-test-action="handle other"></div>
-                <div id="el5" actionable-test-action="click#foo click#bar"></div>
-            </actionable-test>
-            <div id="el6" actionable-test-action="click#foo"></div>`);
+        instance = await fixture(
+            html` <actionable-test actionable-test-action="foo#foo">
+                    <div id="el1" actionable-test-action="click#foo"></div>
+                    <div id="el2" actionable-test-action="custom:event#foo click#foo"></div>
+                    <div id="el3" actionable-test-action="click#baz focus#foo submit#foo"></div>
+                    <div id="el4" actionable-test-action="handle other"></div>
+                    <div id="el5" actionable-test-action="click#foo click#bar"></div>
+                </actionable-test>
+                <div id="el6" actionable-test-action="click#foo"></div>`,
+        );
         instance.mountCallback();
     });
 
