@@ -5,104 +5,111 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import { meta, targetKey, targetsKey } from './meta.js';
-import { Component, ComponentConstructor } from './component.js';
+const findTarget = (root: HTMLElement, name: string): Element | undefined => {
+    const rootTagName = root.tagName.toLowerCase();
 
-const findTargetElement = (component: Component, name: string): Element | undefined => {
-    const customElementTag = component.tagName.toLowerCase();
-
-    for (const element of component.querySelectorAll(`[${customElementTag}-target~="${name}"]`)) {
-        if (element.closest(customElementTag) === component) {
-            return element;
+    for (const candidate of root.querySelectorAll(`[${rootTagName}-target~="${name}"]`)) {
+        if (candidate.closest(rootTagName) === root) {
+            return candidate;
         }
     }
 };
 
-const findTargetElements = (component: Component, name: string): Element[] => {
-    const customElementTag = component.tagName.toLowerCase();
-    const elements = [];
+const findTargets = (root: HTMLElement, name: string): Element[] => {
+    const rootTagName = root.tagName.toLowerCase();
+    const targets = [];
 
-    for (const element of component.querySelectorAll(`[${customElementTag}-targets~="${name}"]`)) {
-        if (element.closest(customElementTag) === component) {
-            elements.push(element);
+    for (const candidate of root.querySelectorAll(`[${rootTagName}-targets~="${name}"]`)) {
+        if (candidate.closest(rootTagName) === root) {
+            targets.push(candidate);
         }
     }
 
-    return elements;
+    return targets;
 };
 
-const initializeTargetable = (component: Component): void => {
-    const proto = Object.getPrototypeOf(component);
-    const target = meta(proto, targetKey);
-    for (const [name] of target) {
-        Object.defineProperty(component, name, {
-            configurable: true,
-            get: function (): Element | undefined {
-                return findTargetElement(component, name);
-            },
-        });
-    }
+const targetMap = new WeakMap<object, string[]>();
 
-    const targets = meta(proto, targetsKey);
-    for (const [name] of targets) {
-        Object.defineProperty(component, name, {
+const initializeTarget = (root: HTMLElement, metadata: object) => {
+    for (const name of targetMap.get(metadata) || []) {
+        Object.defineProperty(root, name, {
             configurable: true,
-            get: function (): Element[] {
-                return findTargetElements(component, name);
+            enumerable: true,
+            get(): Element | undefined {
+                return findTarget(root, name);
             },
         });
     }
 };
 
-export function targetable(): any {
-    return (...args: any[]) => {
-        const [component, context] = args as [ComponentConstructor, ClassDecoratorContext];
+const targetsMap = new WeakMap<object, string[]>();
 
-        if (context.kind !== 'class') {
-            throw new TypeError('The @targetable decorator is for use on classes only.');
-        }
+const initializeTargets = (root: HTMLElement, metadata: object) => {
+    for (const name of targetsMap.get(metadata) || []) {
+        Object.defineProperty(root, name, {
+            configurable: true,
+            enumerable: true,
+            get(): Element[] {
+                return findTargets(root, name);
+            },
+        });
+    }
+};
 
-        return class extends component {
-            mountCallback() {
-                initializeTargetable(this);
-                super.mountCallback();
+type TargetableDecoratorContext = ClassDecoratorContext<CustomElementConstructor> & { metadata: object };
+
+type TargetableDecorator = {
+    (clazz: CustomElementConstructor, context: TargetableDecoratorContext): void;
+};
+
+export function targetable(): TargetableDecorator {
+    return (clazz, context) => {
+        return class extends clazz {
+            constructor(...params: any[]) {
+                super(params);
+                initializeTarget(this, context.metadata);
+                initializeTargets(this, context.metadata);
             }
         };
     };
 }
 
-export function target(): any {
-    return (...args: any[]) => {
-        const [_, context] = args as [unknown, ClassFieldDecoratorContext];
+type TargetDecoratorContext<C, V> = ClassAccessorDecoratorContext<C, V> & { metadata: object };
 
-        if (context.kind !== 'field') {
-            throw new TypeError('The @target decorator is for use on properties only.');
+type TargetDecorator = {
+    <C extends HTMLElement, V extends Element | undefined>(
+        target: ClassAccessorDecoratorTarget<C, V>,
+        context: TargetDecoratorContext<C, V>,
+    ): void;
+};
+
+export const target = (): TargetDecorator => {
+    return (_, context) => {
+        let target = targetMap.get(context.metadata);
+        if (target === undefined) {
+            targetMap.set(context.metadata, (target = []));
         }
 
-        return function (value: any) {
-            if (value !== undefined) {
-                throw new Error(`Field "${String(context.name)}" cannot have an initial value.`);
-            }
-
-            meta(Object.getPrototypeOf(this), targetKey).set(context.name.toString(), undefined);
-        };
+        target.push(context.name.toString());
     };
-}
+};
 
-export function targets(): any {
-    return (...args: any[]) => {
-        const [_, context] = args as [unknown, ClassFieldDecoratorContext];
+type TargetsDecoratorContext<C, V> = ClassAccessorDecoratorContext<C, V> & { metadata: object };
 
-        if (context.kind !== 'field') {
-            throw new TypeError('The @targets decorator is for use on properties only.');
+type TargetsDecorator = {
+    <C extends HTMLElement, V extends Element[]>(
+        target: ClassAccessorDecoratorTarget<C, V>,
+        context: TargetsDecoratorContext<C, V>,
+    ): void;
+};
+
+export const targets = (): TargetsDecorator => {
+    return (_, context) => {
+        let targets = targetsMap.get(context.metadata);
+        if (targets === undefined) {
+            targetsMap.set(context.metadata, (targets = []));
         }
 
-        return function (value: any) {
-            if (value !== undefined) {
-                throw new Error(`Field "${String(context.name)}" cannot have an initial value.`);
-            }
-
-            meta(Object.getPrototypeOf(this), targetsKey).set(context.name.toString(), undefined);
-        };
+        targets.push(context.name.toString());
     };
-}
+};

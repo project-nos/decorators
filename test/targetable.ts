@@ -6,24 +6,21 @@
  */
 
 import { expect, fixture, html } from '@open-wc/testing';
-import { Component } from '../src/component.js';
 import { target, targetable, targets } from '../src/targetable.js';
 
 describe('target', () => {
     @targetable()
-    class TargetTest extends HTMLElement implements Component {
+    class TargetTest extends HTMLElement {
         @target()
-        declare foo: HTMLElement;
+        accessor foo!: HTMLElement;
 
         bar = 'hello';
 
         @target()
-        declare baz: Element;
+        accessor baz!: Element;
 
         @target()
-        declare bing: Element;
-
-        mountCallback(): void {}
+        accessor bing!: Element;
     }
 
     window.customElements.define('target-test', TargetTest);
@@ -37,8 +34,6 @@ describe('target', () => {
                 <div id="el3" target-test-target="bar bing"></div>
             </target-test>`,
         );
-
-        instance.mountCallback();
     });
 
     it('returns the first element where closest tag is the component', async () => {
@@ -60,16 +55,14 @@ describe('target', () => {
 
 describe('targets', () => {
     @targetable()
-    class TargetsTest extends HTMLElement implements Component {
+    class TargetsTest extends HTMLElement {
         @targets()
-        declare foos: HTMLElement[];
+        accessor foos!: HTMLElement[];
 
         bars = 'hello';
 
         @targets()
-        declare bazs: Element[];
-
-        mountCallback(): void {}
+        accessor bazs!: Element[];
     }
 
     window.customElements.define('targets-test', TargetsTest);
@@ -82,8 +75,6 @@ describe('targets', () => {
                 <div id="el2" targets-test-targets="foos bazs"></div>
             </targets-test>`,
         );
-
-        instance.mountCallback();
     });
 
     it('returns the all elements where closest tag is the component', async () => {
