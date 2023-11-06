@@ -5,22 +5,35 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-const findTarget = (root: HTMLElement, name: string): Element | undefined => {
-    const rootTagName = root.tagName.toLowerCase();
-
-    for (const candidate of root.querySelectorAll(`[${rootTagName}-target~="${name}"]`)) {
-        if (candidate.closest(rootTagName) === root) {
+const findTarget = (component: HTMLElement, name: string): Element | undefined => {
+    const baseTag = component.tagName.toLowerCase();
+    for (const candidate of component.querySelectorAll(`[${baseTag}-target~="${name}"]`)) {
+        if (candidate.closest(baseTag) === component) {
             return candidate;
         }
     }
 };
 
-const findTargets = (root: HTMLElement, name: string): Element[] => {
-    const rootTagName = root.tagName.toLowerCase();
+const targetMap = new WeakMap<object, string[]>();
+
+const initializeTarget = (component: HTMLElement, metadata: object) => {
+    for (const name of targetMap.get(metadata) || []) {
+        Object.defineProperty(component, name, {
+            configurable: true,
+            enumerable: true,
+            get(): Element | undefined {
+                return findTarget(component, name);
+            },
+        });
+    }
+};
+
+const findTargets = (component: HTMLElement, name: string): Element[] => {
+    const baseTag = component.tagName.toLowerCase();
     const targets = [];
 
-    for (const candidate of root.querySelectorAll(`[${rootTagName}-targets~="${name}"]`)) {
-        if (candidate.closest(rootTagName) === root) {
+    for (const candidate of component.querySelectorAll(`[${baseTag}-targets~="${name}"]`)) {
+        if (candidate.closest(baseTag) === component) {
             targets.push(candidate);
         }
     }
@@ -28,29 +41,15 @@ const findTargets = (root: HTMLElement, name: string): Element[] => {
     return targets;
 };
 
-const targetMap = new WeakMap<object, string[]>();
-
-const initializeTarget = (root: HTMLElement, metadata: object) => {
-    for (const name of targetMap.get(metadata) || []) {
-        Object.defineProperty(root, name, {
-            configurable: true,
-            enumerable: true,
-            get(): Element | undefined {
-                return findTarget(root, name);
-            },
-        });
-    }
-};
-
 const targetsMap = new WeakMap<object, string[]>();
 
-const initializeTargets = (root: HTMLElement, metadata: object) => {
+const initializeTargets = (component: HTMLElement, metadata: object) => {
     for (const name of targetsMap.get(metadata) || []) {
-        Object.defineProperty(root, name, {
+        Object.defineProperty(component, name, {
             configurable: true,
             enumerable: true,
             get(): Element[] {
-                return findTargets(root, name);
+                return findTargets(component, name);
             },
         });
     }
@@ -59,12 +58,12 @@ const initializeTargets = (root: HTMLElement, metadata: object) => {
 type TargetableDecoratorContext = ClassDecoratorContext<CustomElementConstructor> & { metadata: object };
 
 type TargetableDecorator = {
-    (clazz: CustomElementConstructor, context: TargetableDecoratorContext): void;
+    (target: CustomElementConstructor, context: TargetableDecoratorContext): void;
 };
 
 export function targetable(): TargetableDecorator {
-    return (clazz, context) => {
-        return class extends clazz {
+    return (target, context) => {
+        return class extends target {
             constructor(...params: any[]) {
                 super(params);
                 initializeTarget(this, context.metadata);

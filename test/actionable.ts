@@ -7,19 +7,16 @@
 
 import { expect, fixture, html } from '@open-wc/testing';
 import { fake } from 'sinon';
-import { Component } from '../src/component.js';
 import { actionable } from '../src/actionable.js';
 
 describe('actionable', () => {
     @actionable()
-    class ActionableTest extends HTMLElement implements Component {
+    class ActionableTest extends HTMLElement {
         foo = fake();
 
         bar = fake();
 
         handleEvent = fake();
-
-        mountCallback(): void {}
     }
 
     window.customElements.define('actionable-test', ActionableTest);
@@ -36,7 +33,6 @@ describe('actionable', () => {
                 </actionable-test>
                 <div id="el6" actionable-test-action="click#foo"></div>`,
         );
-        instance.mountCallback();
     });
 
     it('add events on elements based on their action attribute', () => {

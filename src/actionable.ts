@@ -5,8 +5,6 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import { Component, ComponentConstructor } from './component.js';
-
 const parseActionAttribute = (element: Element): { component: string; event: string; method: string }[] => {
     const attributeName = element.getAttributeNames().find((name) => name.endsWith('-action'));
 
@@ -31,7 +29,7 @@ const parseActionAttribute = (element: Element): { component: string; event: str
     return actions;
 };
 
-const bindActions = (component: Component, element: Element) => {
+const bindActions = (component: HTMLElement, element: Element) => {
     for (const action of parseActionAttribute(element)) {
         if (action.component !== component.tagName.toLowerCase()) {
             continue;
@@ -58,17 +56,18 @@ const handleEvent = (event: Event) => {
     }
 };
 
-const bindElements = (component: Component, root: Element) => {
-    for (const element of root.querySelectorAll(`[${component.tagName.toLowerCase()}-action]`)) {
+const bindElements = (component: HTMLElement, root: Element) => {
+    const baseTag = component.tagName.toLowerCase();
+    for (const element of root.querySelectorAll(`[${baseTag}-action]`)) {
         bindActions(component, element);
     }
 
-    if (root instanceof Element && root.hasAttribute(`${component.tagName.toLowerCase()}-action`)) {
+    if (root instanceof Element && root.hasAttribute(`${baseTag}-action`)) {
         bindActions(component, root);
     }
 };
 
-const observeElements = (component: Component) => {
+const observeElements = (component: HTMLElement) => {
     const observer = new MutationObserver((mutations) => {
         for (const mutation of mutations) {
             if (mutation.type === 'attributes' && mutation.target instanceof Element) {
@@ -90,23 +89,17 @@ const observeElements = (component: Component) => {
     });
 };
 
-const initializeActionable = (component: Component): void => {
-    bindElements(component, component);
-    observeElements(component);
+type ActionableDecorator = {
+    (target: CustomElementConstructor, context: ClassDecoratorContext): void;
 };
 
-export function actionable(): any {
-    return (...args: any[]) => {
-        const [component, context] = args as [ComponentConstructor, ClassDecoratorContext];
-
-        if (context.kind !== 'class') {
-            throw new TypeError('The @actionable decorator is for use on classes only.');
-        }
-
-        return class extends component {
-            mountCallback() {
-                initializeActionable(this);
-                super.mountCallback();
+export function actionable(): ActionableDecorator {
+    return (target) => {
+        return class extends target {
+            constructor(...params: any[]) {
+                super(params);
+                bindElements(this, this);
+                observeElements(this);
             }
         };
     };
