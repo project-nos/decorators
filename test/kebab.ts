@@ -6,20 +6,20 @@
  */
 
 import { expect } from '@open-wc/testing';
-import { parameterize } from '../src/parameterize.js';
+import { kebabCase } from '../src/kebab.js';
 
-describe('parameterize', () => {
-    const cases: Array<[PropertyKey, string]> = [
+describe('kebabCase', () => {
+    const cases: Array<[string, string]> = [
         ['json', 'json'],
         ['fooBar', 'foo-bar'],
         ['FooBar', 'foo-bar'],
         ['autofocusWhenReady', 'autofocus-when-ready'],
         ['URLBar', 'url-bar'],
         ['ClipX', 'clip-x'],
-        [Symbol('helloWorld'), 'hello-world'],
+        ['helloWorld', 'hello-world'],
     ];
 
     cases.map(([input, output]) =>
-        it(`transforms ${String(input)} to ${output}`, () => expect(parameterize(input)).to.equal(output)),
+        it(`transforms ${String(input)} to ${output}`, () => expect(kebabCase(input)).to.equal(output)),
     );
 });

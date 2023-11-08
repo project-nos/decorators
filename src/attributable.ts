@@ -6,78 +6,78 @@
  */
 
 import { Component, ComponentConstructor } from './component.js';
-import { mustParameterize } from './parameterize.js';
+import { mustKebabCase } from './kebab.js';
 
 const initializeAttributable = (component: Component): void => {
     for (const [name, definition] of attributeDefinitionsMap.get(component) || []) {
         const value = definition.value();
-        const parameterized = mustParameterize(name);
+        const kebab = mustKebabCase(name);
         let descriptor: PropertyDescriptor | undefined;
 
         switch (definition.options.type) {
             case Number:
-                descriptor = numberDescriptor(parameterized);
+                descriptor = numberDescriptor(kebab);
                 break;
             case Boolean:
-                descriptor = booleanDescriptor(parameterized);
+                descriptor = booleanDescriptor(kebab);
                 break;
             case String:
-                descriptor = stringDescriptor(parameterized);
+                descriptor = stringDescriptor(kebab);
                 break;
             case Array:
-                descriptor = arrayDescriptor(parameterized);
+                descriptor = arrayDescriptor(kebab);
                 break;
             case Object:
-                descriptor = objectDescriptor(parameterized);
+                descriptor = objectDescriptor(kebab);
                 break;
             default:
                 throw new TypeError(`The provided type "${definition.options.type.toString()} is not supported`);
         }
 
         Object.defineProperty(component, name, Object.assign({ configurable: true, enumerable: true }, descriptor));
-        if (value !== undefined && !component.hasAttribute(parameterized)) {
+        if (value !== undefined && !component.hasAttribute(kebab)) {
             descriptor.set!.call(component, value);
         }
     }
 };
 
-const numberDescriptor = (parameterized: string): PropertyDescriptor => {
+const numberDescriptor = (name: string): PropertyDescriptor => {
     return {
         get: function (this: Component): number {
-            return Number(this.getAttribute(parameterized) || 0);
+            return Number(this.getAttribute(name) || 0);
         },
         set: function (this: Component, fresh: string) {
-            this.setAttribute(parameterized, fresh);
+            this.setAttribute(name, fresh);
         },
     };
 };
 
-const booleanDescriptor = (parameterized: string): PropertyDescriptor => {
+const booleanDescriptor = (name: string): PropertyDescriptor => {
     return {
         get: function (this: Component): boolean {
-            return this.hasAttribute(parameterized);
+            return this.hasAttribute(name);
         },
         set: function (this: Component, fresh: boolean) {
-            this.toggleAttribute(parameterized, fresh);
+            this.toggleAttribute(name, fresh);
         },
     };
 };
 
-const stringDescriptor = (parameterized: string): PropertyDescriptor => {
+const stringDescriptor = (name: string): PropertyDescriptor => {
     return {
         get: function (this: Component): string {
-            return this.getAttribute(parameterized) || '';
+            return this.getAttribute(name) || '';
         },
         set: function (this: Component, fresh: string) {
-            this.setAttribute(parameterized, fresh || '');
+            this.setAttribute(name, fresh || '');
         },
     };
 };
 
-const arrayDescriptor = (parameterized: string): PropertyDescriptor => {
+const arrayDescriptor = (name: string): PropertyDescriptor => {
     return {
         get: function (this: Component): object {
-            const value = JSON.parse(this.getAttribute(parameterized) || '[]');
+            const value = JSON.parse(this.getAttribute(name) || '[]');
 
             if (value === null || typeof value !== 'object' || !Array.isArray(value)) {
                 throw new TypeError(`Expected value of type "array" but instead got value "${value}"`);
@@ -86,15 +86,15 @@ const arrayDescriptor = (parameterized: string): PropertyDescriptor => {
             return value;
         },
         set: function (this: Component, fresh: object) {
-            this.setAttribute(parameterized, JSON.stringify(fresh || []));
+            this.setAttribute(name, JSON.stringify(fresh || []));
         },
     };
 };
 
-const objectDescriptor = (parameterized: string): PropertyDescriptor => {
+const objectDescriptor = (kebab: string): PropertyDescriptor => {
     return {
         get: function (this: Component): object {
-            const value = JSON.parse(this.getAttribute(parameterized) || '{}');
+            const value = JSON.parse(this.getAttribute(kebab) || '{}');
 
             if (value === null || typeof value !== 'object' || Array.isArray(value)) {
                 throw new TypeError(`Expected value of type "object" but instead got value "${value}"`);
@@ -103,7 +103,7 @@ const objectDescriptor = (parameterized: string): PropertyDescriptor => {
             return value;
         },
         set: function (this: Component, fresh: object) {
-            this.setAttribute(parameterized, JSON.stringify(fresh || {}));
+            this.setAttribute(kebab, JSON.stringify(fresh || {}));
         },
     };
 };
