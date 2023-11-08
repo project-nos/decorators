@@ -58,7 +58,7 @@ const handleEvent = (event: Event) => {
     }
 };
 
-const bindElements = (component: Component, root: Element) => {
+const initializeActionable = (component: Component, root: Element) => {
     const componentTagName = component.tagName.toLowerCase();
     for (const element of root.querySelectorAll(`[${componentTagName}-action]`)) {
         bindActions(component, element);
@@ -69,15 +69,15 @@ const bindElements = (component: Component, root: Element) => {
     }
 };
 
-const observeElements = (component: Component) => {
+const observeActionable = (component: Component) => {
     const observer = new MutationObserver((mutations) => {
         for (const mutation of mutations) {
             if (mutation.type === 'attributes' && mutation.target instanceof Element) {
-                bindElements(component, mutation.target);
+                initializeActionable(component, mutation.target);
             } else if (mutation.type === 'childList' && mutation.addedNodes.length) {
                 for (const node of mutation.addedNodes) {
                     if (node instanceof Element) {
-                        bindElements(component, node);
+                        initializeActionable(component, node);
                     }
                 }
             }
@@ -100,12 +100,12 @@ export const actionable = (): ActionableDecorator => {
         return class extends target {
             constructor(...args: any[]) {
                 super(args);
-                bindElements(this, this);
+                initializeActionable(this, this);
             }
 
             connectedCallback() {
                 super.connectedCallback?.();
-                observeElements(this);
+                observeActionable(this);
             }
         };
     };

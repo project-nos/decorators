@@ -8,7 +8,7 @@
 import { Component, ComponentConstructor } from './component.js';
 import { mustParameterize } from './parameterize.js';
 
-const initializeAttributes = (component: Component): void => {
+const initializeAttributable = (component: Component): void => {
     for (const [name, definition] of attributeDefinitionsMap.get(component) || []) {
         const value = definition.value();
         const parameterized = mustParameterize(name);
@@ -117,7 +117,7 @@ export const attributable = (): AttributableDecorator => {
         return class extends target {
             constructor(...args: any[]) {
                 super(args);
-                initializeAttributes(this);
+                initializeAttributable(this);
             }
         };
     };
