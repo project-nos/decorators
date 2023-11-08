@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import { Component } from './component.js';
+import { Component, ComponentConstructor } from './component.js';
 
 const findTarget = <C extends Component, V extends Element | undefined>(component: C, name: string): V => {
     const componentTagName = component.tagName.toLowerCase();
@@ -23,33 +23,79 @@ const findTargets = <C extends Component, V extends Element[]>(component: C, nam
     ) as V;
 };
 
-type TargetDecorator<C extends Component, V extends Element | undefined> = {
-    (
-        target: ClassAccessorDecoratorTarget<C, V>,
-        context: ClassAccessorDecoratorContext<C, V>,
-    ): ClassAccessorDecoratorResult<C, V>;
-};
+const targetDefinitionsMap = new WeakMap<Component, Set<string>>();
+
+type TargetDecorator<C extends Component, V extends Element | undefined> = (
+    target: ClassAccessorDecoratorTarget<C, V>,
+    context: ClassAccessorDecoratorContext<C, V>,
+) => void;
 
 export const target = <C extends Component, V extends Element | undefined>(): TargetDecorator<C, V> => {
     return (_, context) => {
-        return {
-            get(this: C): V {
-                return findTarget(this, context.name.toString());
-            },
-        };
+        const { name, addInitializer } = context;
+
+        addInitializer(function (this) {
+            let targetDefinitions = targetDefinitionsMap.get(this);
+            if (targetDefinitions === undefined) {
+                targetDefinitionsMap.set(this, (targetDefinitions = new Set()));
+            }
+
+            targetDefinitions.add(name.toString());
+        });
     };
 };
 
-type TargetsDecorator<C extends Component, V extends Element[]> = {
-    (target: ClassAccessorDecoratorTarget<C, V>, context: ClassAccessorDecoratorContext<C, V>): void;
-};
+const targetsDefinitionsMap = new WeakMap<Component, Set<string>>();
+
+type TargetsDecorator<C extends Component, V extends Element[]> = (
+    target: ClassAccessorDecoratorTarget<C, V>,
+    context: ClassAccessorDecoratorContext<C, V>,
+) => void;
 
 export const targets = <C extends Component, V extends Element[]>(): TargetsDecorator<C, V> => {
     return (_, context) => {
-        return {
-            get(this: C): V {
-                return findTargets(this, context.name.toString()) as V;
+        const { name, addInitializer } = context;
+
+        addInitializer(function (this: C) {
+            let targetsDefinition = targetsDefinitionsMap.get(this);
+            if (targetsDefinition === undefined) {
+                targetsDefinitionsMap.set(this, (targetsDefinition = new Set()));
+            }
+
+            targetsDefinition.add(name.toString());
+        });
+    };
+};
+
+const initializeTargetable = (component: Component) => {
+    for (const name of targetDefinitionsMap.get(component) || []) {
+        Object.defineProperty(component, name, {
+            get(): Element | undefined {
+                return findTarget(component, name);
             },
+        });
+    }
+
+    for (const name of targetsDefinitionsMap.get(component) || []) {
+        Object.defineProperty(component, name, {
+            get(): Element[] {
+                return findTargets(component, name);
+            },
+        });
+    }
+};
+
+type TargetableDecorator = {
+    (target: ComponentConstructor, context: ClassDecoratorContext): any;
+};
+
+export const targetable = (): TargetableDecorator => {
+    return (target) => {
+        return class extends target {
+            constructor(...args: any[]) {
+                super(args);
+                initializeTargetable(this);
+            }
         };
     };
 };

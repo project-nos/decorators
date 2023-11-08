@@ -6,5 +6,5 @@
  */
 
 export { attributable, attribute } from './attributable.js';
-export { target, targets } from './targetable.js';
+export { targetable, target, targets } from './targetable.js';
 export { actionable } from './actionable.js';
