@@ -109,12 +109,14 @@ const objectDescriptor = (kebab: string): PropertyDescriptor => {
 };
 
 type AttributableDecorator = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (target: ComponentConstructor, context: ClassDecoratorContext): any;
 };
 
 export const attributable = (): AttributableDecorator => {
     return (target) => {
         return class extends target {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             constructor(...args: any[]) {
                 super(args);
                 initializeAttributable(this);
@@ -136,6 +138,7 @@ type AttributeDecorator<C extends Component, V> = {
 
 type AttributeDefinition = {
     options: AttributeOptions;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     value(): any;
 };
 
