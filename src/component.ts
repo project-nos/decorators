@@ -6,7 +6,6 @@
  */
 
 export interface Component extends HTMLElement {
-    mountCallback?(): void;
     connectedCallback?(): void;
     disconnectedCallback?(): void;
 }

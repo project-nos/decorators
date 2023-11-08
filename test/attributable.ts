@@ -6,40 +6,33 @@
  */
 
 import { expect, fixture, html } from '@open-wc/testing';
-import { Component } from '../src/component.js';
 import { attributable, attribute } from '../src/attributable.js';
 
 describe('initialization', () => {
     @attributable()
-    class InitializeAttributeTest extends HTMLElement implements Component {
+    class InitializeAttributeTest extends HTMLElement {
         @attribute({ type: Number })
-        testNumber = 123;
+        accessor testNumber = 123;
 
         @attribute({ type: Boolean })
-        testBool = false;
+        accessor testBool = false;
 
         @attribute({ type: String })
-        testString = 'foo';
+        accessor testString = 'foo';
 
         @attribute({ type: Array })
-        testArray = [1, 2, 3];
+        accessor testArray = [1, 2, 3];
 
         @attribute({ type: Object })
-        testObject = { foo: 'bar' };
-
-        mountCallback(): void {}
+        accessor testObject = { foo: 'bar' };
     }
 
     window.customElements.define('initialize-attribute-test', InitializeAttributeTest);
 
     let instance: InitializeAttributeTest;
-    it('does not error during creation', () => {
-        document.createElement('initialize-attribute-test');
-    });
 
     it('does not alter field values from their initial value', async () => {
         instance = await fixture(html`<initialize-attribute-test />`);
-        instance.mountCallback();
 
         expect(instance).to.have.property('testNumber', 123);
         expect(instance).to.have.property('testBool', false);
@@ -50,7 +43,6 @@ describe('initialization', () => {
 
     it('reflects the initial value as an attribute, if not present', async () => {
         instance = await fixture(html`<initialize-attribute-test />`);
-        instance.mountCallback();
 
         expect(instance).to.have.attribute('test-number', '123');
         expect(instance).to.not.have.attribute('test-bool');
@@ -69,7 +61,6 @@ describe('initialization', () => {
                 test-object="${JSON.stringify({ foo: 'baz' })}"
             />`,
         );
-        instance.mountCallback();
 
         expect(instance).to.have.property('testNumber', 456);
         expect(instance).to.have.property('testBool', true);
@@ -80,7 +71,6 @@ describe('initialization', () => {
 
     it('changes the property when the attribute changes', async () => {
         instance = await fixture(html`<initialize-attribute-test />`);
-        instance.mountCallback();
 
         instance.setAttribute('test-number', '456');
         expect(instance).to.have.property('testNumber', 456);
@@ -100,7 +90,6 @@ describe('initialization', () => {
 
     it('changes the attribute when the property changes', async () => {
         instance = await fixture(html`<initialize-attribute-test />`);
-        instance.mountCallback();
 
         instance.testNumber = 789;
         expect(instance).to.have.attribute('test-number', '789');
@@ -121,11 +110,9 @@ describe('initialization', () => {
 
 describe('boolean casting', () => {
     @attributable()
-    class BooleanAttributeTest extends HTMLElement implements Component {
+    class BooleanAttributeTest extends HTMLElement {
         @attribute({ type: Boolean })
-        testBool = false;
-
-        mountCallback(): void {}
+        accessor testBool = false;
     }
 
     window.customElements.define('boolean-attribute-test', BooleanAttributeTest);
@@ -133,7 +120,6 @@ describe('boolean casting', () => {
     let instance: BooleanAttributeTest;
     it('toggles boolean properties', async () => {
         instance = await fixture(html`<boolean-attribute-test />`);
-        instance.mountCallback();
 
         instance.setAttribute('test-bool', 'foo');
         expect(instance).to.have.property('testBool', true);
@@ -157,17 +143,15 @@ describe('boolean casting', () => {
 
 describe('naming', () => {
     @attributable()
-    class NamingAttributableTest extends HTMLElement implements Component {
+    class NamingAttributableTest extends HTMLElement {
         @attribute({ type: String })
-        fooBarBazBing = 'fooBarBazBing';
+        accessor fooBarBazBing = 'fooBarBazBing';
 
         @attribute({ type: String })
-        URLBar = 'URLBar';
+        accessor URLBar = 'URLBar';
 
         @attribute({ type: String })
-        ClipX = 'ClipX';
-
-        mountCallback() {}
+        accessor ClipX = 'ClipX';
     }
 
     window.customElements.define('naming-attribute-test', NamingAttributableTest);
@@ -175,7 +159,6 @@ describe('naming', () => {
     let instance: NamingAttributableTest;
     it('converts property names to attribute names', async () => {
         instance = await fixture(html`<naming-attribute-test />`);
-        instance.mountCallback();
 
         instance.fooBarBazBing = 'bar';
         expect(instance.getAttributeNames()).to.include('foo-bar-baz-bing');
@@ -183,7 +166,6 @@ describe('naming', () => {
 
     it('will parameterize acronyms', async () => {
         instance = await fixture(html`<naming-attribute-test />`);
-        instance.mountCallback();
 
         instance.URLBar = 'bar';
         expect(instance.getAttributeNames()).to.include('url-bar');
@@ -191,7 +173,6 @@ describe('naming', () => {
 
     it('parameterizes cap suffixed names correctly', async () => {
         instance = await fixture(html`<naming-attribute-test />`);
-        instance.mountCallback();
 
         instance.ClipX = 'bar';
         expect(instance.getAttributeNames()).to.include('clip-x');

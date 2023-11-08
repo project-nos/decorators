@@ -92,10 +92,10 @@ const observeElements = (component: Component) => {
 };
 
 type ActionableDecorator = {
-    (target: ComponentConstructor, context: ClassDecoratorContext): void;
+    (target: ComponentConstructor, context: ClassDecoratorContext): any;
 };
 
-export function actionable(): ActionableDecorator {
+export const actionable = (): ActionableDecorator => {
     return (target) => {
         return class extends target {
             constructor(...args: any[]) {
@@ -109,4 +109,4 @@ export function actionable(): ActionableDecorator {
             }
         };
     };
-}
+};
