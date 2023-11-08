@@ -8,28 +8,19 @@
 import { Component } from './component.js';
 
 const findTarget = <C extends Component, V extends Element | undefined>(component: C, name: string): V => {
-    const componentTagName = component.tagName;
+    const componentTagName = component.tagName.toLowerCase();
 
-    for (const candidate of component.querySelectorAll(`[${componentTagName}-target~="${name}"]`)) {
-        if (candidate.closest(componentTagName) === component) {
-            return candidate as V;
-        }
-    }
-
-    return undefined as V;
+    return Array.from(component.querySelectorAll(`[${componentTagName}-target~="${name}"]`)).find(
+        (candidate) => candidate.closest(componentTagName) === component,
+    ) as V;
 };
 
 const findTargets = <C extends Component, V extends Element[]>(component: C, name: string): V => {
-    const componentTagName = component.tagName;
-    const targets = [];
+    const componentTagName = component.tagName.toLowerCase();
 
-    for (const candidate of component.querySelectorAll(`[${componentTagName}-targets~="${name}"]`)) {
-        if (candidate.closest(componentTagName) === component) {
-            targets.push(candidate);
-        }
-    }
-
-    return targets as V;
+    return Array.from(component.querySelectorAll(`[${componentTagName}-targets~="${name}"]`)).filter(
+        (candidate) => candidate.closest(componentTagName) === component,
+    ) as V;
 };
 
 type TargetDecorator<C extends Component, V extends Element | undefined> = {
