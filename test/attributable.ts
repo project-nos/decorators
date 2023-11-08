@@ -25,6 +25,17 @@ describe('initialization', () => {
 
         @attribute({ type: Object })
         accessor testObject = { foo: 'bar' };
+
+        #testGetterSetter = 'baz';
+
+        @attribute({ type: String })
+        set testGetterSetter(value: string) {
+            this.#testGetterSetter = value;
+        }
+
+        get testGetterSetter(): string {
+            return this.#testGetterSetter;
+        }
     }
 
     window.customElements.define('initialize-attribute-test', InitializeAttributeTest);
@@ -39,6 +50,7 @@ describe('initialization', () => {
         expect(instance).to.have.property('testString', 'foo');
         expect(instance).to.deep.property('testArray', [1, 2, 3]);
         expect(instance).to.deep.property('testObject', { foo: 'bar' });
+        expect(instance).to.have.property('testGetterSetter', 'baz');
     });
 
     it('reflects the initial value as an attribute, if not present', async () => {
@@ -49,6 +61,7 @@ describe('initialization', () => {
         expect(instance).to.have.attribute('test-string', 'foo');
         expect(instance).to.have.attribute('test-array', '[1,2,3]');
         expect(instance).to.have.attribute('test-object', '{"foo":"bar"}');
+        expect(instance).to.have.attribute('test-getter-setter', 'baz');
     });
 
     it('prioritises the value in the attribute over the property', async () => {
@@ -59,6 +72,7 @@ describe('initialization', () => {
                 test-string="bar"
                 test-array="[4,5,6]"
                 test-object="${JSON.stringify({ foo: 'baz' })}"
+                test-getter-setter="bing"
             />`,
         );
 
@@ -67,6 +81,7 @@ describe('initialization', () => {
         expect(instance).to.have.property('testString', 'bar');
         expect(instance).to.deep.property('testArray', [4, 5, 6]);
         expect(instance).to.deep.property('testObject', { foo: 'baz' });
+        expect(instance).to.have.property('testGetterSetter', 'bing');
     });
 
     it('changes the property when the attribute changes', async () => {
@@ -86,6 +101,9 @@ describe('initialization', () => {
 
         instance.setAttribute('test-object', JSON.stringify({ foo: 'baz' }));
         expect(instance).to.deep.property('testObject', { foo: 'baz' });
+
+        instance.setAttribute('test-getter-setter', 'bing');
+        expect(instance).to.have.property('testGetterSetter', 'bing');
     });
 
     it('changes the attribute when the property changes', async () => {
@@ -105,6 +123,9 @@ describe('initialization', () => {
 
         instance.testObject = { foo: 'baz' };
         expect(instance).to.have.attribute('test-object', JSON.stringify({ foo: 'baz' }));
+
+        instance.testGetterSetter = 'bing';
+        expect(instance).to.have.attribute('test-getter-setter', 'bing');
     });
 });
 

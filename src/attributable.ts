@@ -10,8 +10,9 @@ import { mustParameterize } from './parameterize.js';
 
 const initializeAttributes = (component: Component): void => {
     for (const [name, definition] of attributeDefinitionsMap.get(component) || []) {
-        let descriptor: PropertyDescriptor | undefined;
+        const value = definition.value();
         const parameterized = mustParameterize(name);
+        let descriptor: PropertyDescriptor | undefined;
 
         switch (definition.options.type) {
             case Number:
@@ -34,8 +35,6 @@ const initializeAttributes = (component: Component): void => {
         }
 
         Object.defineProperty(component, name, Object.assign({ configurable: true, enumerable: true }, descriptor));
-
-        const value = definition.value();
         if (value !== undefined && !component.hasAttribute(parameterized)) {
             descriptor.set!.call(component, value);
         }
@@ -130,9 +129,9 @@ type AttributeOptions = {
 
 type AttributeDecorator<C extends Component, V> = {
     (
-        target: ClassAccessorDecoratorTarget<C, V>,
-        context: ClassAccessorDecoratorContext<C, V>,
-    ): ClassAccessorDecoratorResult<C, V>;
+        target: ClassAccessorDecoratorTarget<C, V> | ((value: V) => void),
+        context: ClassAccessorDecoratorContext<C, V> | ClassSetterDecoratorContext<C, V>,
+    ): void;
 };
 
 type AttributeDefinition = {
@@ -144,20 +143,21 @@ const attributeDefinitionsMap = new WeakMap<Component, Map<string, AttributeDefi
 
 export const attribute = <C extends Component, V>(options: AttributeOptions): AttributeDecorator<C, V> => {
     return (_, context) => {
-        return {
-            init(this: C, value: V): V {
-                let attributeDefinitions = attributeDefinitionsMap.get(this);
-                if (attributeDefinitions === undefined) {
-                    attributeDefinitionsMap.set(this, (attributeDefinitions = new Map()));
-                }
+        const { kind, addInitializer, name } = context;
+        if (kind !== 'accessor' && kind !== 'setter') {
+            throw new Error('The @attribute decorator is for use on accessors and setters only.');
+        }
 
-                attributeDefinitions.set(context.name.toString(), {
-                    options: options,
-                    value: () => value,
-                });
+        addInitializer(function (this: C) {
+            let attributeDefinitions = attributeDefinitionsMap.get(this);
+            if (attributeDefinitions === undefined) {
+                attributeDefinitionsMap.set(this, (attributeDefinitions = new Map()));
+            }
 
-                return value;
-            },
-        };
+            attributeDefinitions.set(name.toString(), {
+                options: options,
+                value: () => this[name as keyof C],
+            });
+        });
     };
 };
