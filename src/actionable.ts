@@ -5,6 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+import { Component, ComponentConstructor } from './component.js';
+
 const parseActionAttribute = (element: Element): { component: string; event: string; method: string }[] => {
     const attributeName = element.getAttributeNames().find((name) => name.endsWith('-action'));
 
@@ -29,7 +31,7 @@ const parseActionAttribute = (element: Element): { component: string; event: str
     return actions;
 };
 
-const bindActions = (component: HTMLElement, element: Element) => {
+const bindActions = (component: Component, element: Element) => {
     for (const action of parseActionAttribute(element)) {
         if (action.component !== component.tagName.toLowerCase()) {
             continue;
@@ -46,7 +48,7 @@ const handleEvent = (event: Event) => {
             continue;
         }
 
-        type EventDispatcher = HTMLElement & Record<string, (ev: Event) => unknown>;
+        type EventDispatcher = Component & Record<string, (ev: Event) => unknown>;
         const component = element.closest<EventDispatcher>(action.component);
         if (!component || typeof component[action.method] !== 'function') {
             continue;
@@ -56,18 +58,18 @@ const handleEvent = (event: Event) => {
     }
 };
 
-const bindElements = (component: HTMLElement, root: Element) => {
-    const baseTag = component.tagName.toLowerCase();
-    for (const element of root.querySelectorAll(`[${baseTag}-action]`)) {
+const bindElements = (component: Component, root: Element) => {
+    const componentTagName = component.tagName.toLowerCase();
+    for (const element of root.querySelectorAll(`[${componentTagName}-action]`)) {
         bindActions(component, element);
     }
 
-    if (root instanceof Element && root.hasAttribute(`${baseTag}-action`)) {
+    if (root instanceof Element && root.hasAttribute(`${componentTagName}-action`)) {
         bindActions(component, root);
     }
 };
 
-const observeElements = (component: HTMLElement) => {
+const observeElements = (component: Component) => {
     const observer = new MutationObserver((mutations) => {
         for (const mutation of mutations) {
             if (mutation.type === 'attributes' && mutation.target instanceof Element) {
@@ -90,15 +92,19 @@ const observeElements = (component: HTMLElement) => {
 };
 
 type ActionableDecorator = {
-    (target: CustomElementConstructor, context: ClassDecoratorContext): void;
+    (target: ComponentConstructor, context: ClassDecoratorContext): void;
 };
 
 export function actionable(): ActionableDecorator {
     return (target) => {
         return class extends target {
-            constructor(...params: any[]) {
-                super(params);
+            constructor(...args: any[]) {
+                super(args);
                 bindElements(this, this);
+            }
+
+            connectedCallback() {
+                super.connectedCallback?.();
                 observeElements(this);
             }
         };

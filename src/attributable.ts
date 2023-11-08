@@ -122,7 +122,7 @@ export function attributable(): any {
         return class extends component {
             mountCallback() {
                 initializeAttributable(this);
-                super.mountCallback();
+                super.mountCallback?.();
             }
         };
     };
