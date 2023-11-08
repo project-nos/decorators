@@ -6,10 +6,9 @@
  */
 
 import { expect, fixture, html } from '@open-wc/testing';
-import { target, targetable, targets } from '../src/targetable.js';
+import { target, targets } from '../src/targetable.js';
 
 describe('target', () => {
-    @targetable()
     class TargetTest extends HTMLElement {
         @target()
         accessor foo!: HTMLElement;
@@ -54,7 +53,6 @@ describe('target', () => {
 });
 
 describe('targets', () => {
-    @targetable()
     class TargetsTest extends HTMLElement {
         @targets()
         accessor foos!: HTMLElement[];
