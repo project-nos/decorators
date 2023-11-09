@@ -8,105 +8,114 @@
 import { Component, ComponentConstructor } from './component.js';
 import { getAccessor, mustKebabCase } from './util.js';
 
-export const initializeAttributable = (component: Component): void => {
-    for (const [name, options] of attributeOptionsMap.get(component) || []) {
-        const kebab = mustKebabCase(name);
-        let descriptor: PropertyDescriptor | undefined;
+type Converter = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    normalize: (value: string | null) => any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    denormalize: (value: any) => string | boolean;
+};
 
-        switch (options.type) {
-            case Number:
-                descriptor = numberDescriptor(kebab);
-                break;
-            case Boolean:
-                descriptor = booleanDescriptor(kebab);
-                break;
-            case String:
-                descriptor = stringDescriptor(kebab);
-                break;
-            case Array:
-                descriptor = arrayDescriptor(kebab);
-                break;
-            case Object:
-                descriptor = objectDescriptor(kebab);
-                break;
-            default:
-                throw new TypeError(`The provided type "${options.type.toString()} is not supported`);
+const numberConverter: Converter = {
+    normalize: (value) => {
+        return Number(value || 0);
+    },
+    denormalize: (value) => {
+        return String(value);
+    },
+};
+
+const stringConverter: Converter = {
+    normalize: (value) => {
+        return String(value);
+    },
+    denormalize: (value) => {
+        return String(value);
+    },
+};
+
+const arrayConverter: Converter = {
+    normalize: (value) => {
+        const normalizedValue = JSON.parse(value || '[]');
+
+        if (normalizedValue === null || typeof normalizedValue !== 'object' || !Array.isArray(normalizedValue)) {
+            throw new TypeError(`Expected value of type "array" but instead got value "${normalizedValue}"`);
         }
 
-        const accessor = getAccessor(component, name);
-        const initialValue = accessor.getter.call(component);
-        Object.defineProperty(component, name, Object.assign({ configurable: true, enumerable: true }, descriptor));
-        if (initialValue !== undefined && !component.hasAttribute(kebab)) {
-            descriptor.set!.call(component, initialValue);
+        return normalizedValue;
+    },
+    denormalize: (value) => {
+        return JSON.stringify(value || []);
+    },
+};
+
+const objectConverter: Converter = {
+    normalize: (value) => {
+        value = JSON.parse(value || '{}');
+
+        if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+            throw new TypeError(`Expected value of type "object" but instead got value "${value}"`);
         }
+
+        return value;
+    },
+    denormalize: (value) => {
+        return JSON.stringify(value || {});
+    },
+};
+
+type TypeHint = NumberConstructor | BooleanConstructor | StringConstructor | ArrayConstructor | ObjectConstructor;
+
+const getConverter = (type: TypeHint): Converter => {
+    switch (type) {
+        case Number:
+            return numberConverter;
+        case Array:
+            return arrayConverter;
+        case Object:
+            return objectConverter;
+        default:
+            return stringConverter;
     }
 };
 
-const numberDescriptor = (name: string): PropertyDescriptor => {
-    return {
-        get: function (this: Component): number {
-            return Number(this.getAttribute(name) || 0);
-        },
-        set: function (this: Component, fresh: string) {
-            this.setAttribute(name, fresh);
-        },
-    };
-};
+export const initializeAttributable = (component: Component): void => {
+    for (const [name, options] of attributeOptionsMap.get(component) || []) {
+        const kebab = mustKebabCase(name);
+        const accessor = getAccessor(component, name);
+        const converter = getConverter(options.type);
 
-const booleanDescriptor = (name: string): PropertyDescriptor => {
-    return {
-        get: function (this: Component): boolean {
-            return this.hasAttribute(name);
-        },
-        set: function (this: Component, fresh: boolean) {
-            this.toggleAttribute(name, fresh);
-        },
-    };
-};
+        const descriptor = {
+            get: function (this: Component) {
+                accessor.getter.call(this);
 
-const stringDescriptor = (name: string): PropertyDescriptor => {
-    return {
-        get: function (this: Component): string {
-            return this.getAttribute(name) || '';
-        },
-        set: function (this: Component, fresh: string) {
-            this.setAttribute(name, fresh || '');
-        },
-    };
-};
+                if (options.type === Boolean) {
+                    return this.hasAttribute(kebab);
+                }
 
-const arrayDescriptor = (name: string): PropertyDescriptor => {
-    return {
-        get: function (this: Component): object {
-            const value = JSON.parse(this.getAttribute(name) || '[]');
+                return converter.normalize(this.getAttribute(kebab));
+            },
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            set: function (this: Component, fresh: any) {
+                accessor.setter.call(this, fresh);
+                if (options.type === Boolean) {
+                    this.toggleAttribute(kebab, fresh);
+                } else {
+                    this.setAttribute(kebab, converter.denormalize(fresh) as string);
+                }
+            },
+        };
 
-            if (value === null || typeof value !== 'object' || !Array.isArray(value)) {
-                throw new TypeError(`Expected value of type "array" but instead got value "${value}"`);
+        Object.defineProperty(component, name, Object.assign({ configurable: true, enumerable: true }, descriptor));
+
+        const initialValue = accessor.getter.call(component);
+        if (initialValue !== undefined && !component.hasAttribute(kebab)) {
+            if (options.type === Boolean) {
+                component.toggleAttribute(kebab, initialValue);
+            } else {
+                component.setAttribute(kebab, converter.denormalize(initialValue) as string);
             }
-
-            return value;
-        },
-        set: function (this: Component, fresh: object) {
-            this.setAttribute(name, JSON.stringify(fresh || []));
-        },
-    };
-};
-
-const objectDescriptor = (kebab: string): PropertyDescriptor => {
-    return {
-        get: function (this: Component): object {
-            const value = JSON.parse(this.getAttribute(kebab) || '{}');
-
-            if (value === null || typeof value !== 'object' || Array.isArray(value)) {
-                throw new TypeError(`Expected value of type "object" but instead got value "${value}"`);
-            }
-
-            return value;
-        },
-        set: function (this: Component, fresh: object) {
-            this.setAttribute(kebab, JSON.stringify(fresh || {}));
-        },
-    };
+        }
+    }
 };
 
 type AttributableDecorator = {
@@ -127,7 +136,7 @@ export const attributable = (): AttributableDecorator => {
 };
 
 type AttributeOptions = {
-    type: NumberConstructor | BooleanConstructor | StringConstructor | ArrayConstructor | ObjectConstructor;
+    type: TypeHint;
 };
 
 type AttributeDecorator<C extends Component, V> = {

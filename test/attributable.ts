@@ -28,12 +28,17 @@ describe('initialization', () => {
 
         #testGetterSetter = 'baz';
 
+        testGetterSetterSetCount = 0;
+        testGetterSetterGetCount = 0;
+
         @attribute({ type: String })
         set testGetterSetter(value: string) {
+            this.testGetterSetterSetCount += 1;
             this.#testGetterSetter = value;
         }
 
         get testGetterSetter(): string {
+            this.testGetterSetterGetCount += 1;
             return this.#testGetterSetter;
         }
     }
@@ -126,6 +131,20 @@ describe('initialization', () => {
 
         instance.testGetterSetter = 'bing';
         expect(instance).to.have.attribute('test-getter-setter', 'bing');
+    });
+
+    it('calls underlying getter and setter', async () => {
+        instance = await fixture(html`<initialize-attribute-test />`);
+        expect(instance).to.have.property('testGetterSetterGetCount', 1);
+
+        instance.testGetterSetter;
+        expect(instance).to.have.property('testGetterSetterGetCount', 2);
+
+        instance.testGetterSetter = 'bing';
+        expect(instance).to.have.property('testGetterSetterSetCount', 1);
+
+        instance.testGetterSetter = 'bong';
+        expect(instance).to.have.property('testGetterSetterSetCount', 2);
     });
 });
 
