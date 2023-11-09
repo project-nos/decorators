@@ -9,12 +9,11 @@ import { Component, ComponentConstructor } from './component.js';
 import { mustKebabCase } from './kebab.js';
 
 export const initializeAttributable = (component: Component): void => {
-    for (const [name, definition] of attributeDefinitionsMap.get(component) || []) {
-        const value = definition.value();
+    for (const [name, options] of attributeOptionsMap.get(component) || []) {
         const kebab = mustKebabCase(name);
         let descriptor: PropertyDescriptor | undefined;
 
-        switch (definition.options.type) {
+        switch (options.type) {
             case Number:
                 descriptor = numberDescriptor(kebab);
                 break;
@@ -31,12 +30,13 @@ export const initializeAttributable = (component: Component): void => {
                 descriptor = objectDescriptor(kebab);
                 break;
             default:
-                throw new TypeError(`The provided type "${definition.options.type.toString()} is not supported`);
+                throw new TypeError(`The provided type "${options.type.toString()} is not supported`);
         }
 
+        const initialValue = component[name as keyof Component];
         Object.defineProperty(component, name, Object.assign({ configurable: true, enumerable: true }, descriptor));
-        if (value !== undefined && !component.hasAttribute(kebab)) {
-            descriptor.set!.call(component, value);
+        if (initialValue !== undefined && !component.hasAttribute(kebab)) {
+            descriptor.set!.call(component, initialValue);
         }
     }
 };
@@ -136,13 +136,7 @@ type AttributeDecorator<C extends Component, V> = {
     ): void;
 };
 
-type AttributeDefinition = {
-    options: AttributeOptions;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    value(): any;
-};
-
-const attributeDefinitionsMap = new WeakMap<Component, Map<string, AttributeDefinition>>();
+const attributeOptionsMap = new WeakMap<Component, Map<string, AttributeOptions>>();
 
 export const attribute = <C extends Component, V>(options: AttributeOptions): AttributeDecorator<C, V> => {
     return (_, context) => {
@@ -152,15 +146,12 @@ export const attribute = <C extends Component, V>(options: AttributeOptions): At
         }
 
         addInitializer(function (this: C) {
-            let attributeDefinitions = attributeDefinitionsMap.get(this);
-            if (attributeDefinitions === undefined) {
-                attributeDefinitionsMap.set(this, (attributeDefinitions = new Map()));
+            let attributeOptions = attributeOptionsMap.get(this);
+            if (attributeOptions === undefined) {
+                attributeOptionsMap.set(this, (attributeOptions = new Map()));
             }
 
-            attributeDefinitions.set(name.toString(), {
-                options: options,
-                value: () => this[name as keyof C],
-            });
+            attributeOptions.set(name.toString(), options);
         });
     };
 };
