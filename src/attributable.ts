@@ -8,7 +8,7 @@
 import { Component, ComponentConstructor } from './component.js';
 import { mustKebabCase } from './kebab.js';
 
-const initializeAttributable = (component: Component): void => {
+export const initializeAttributable = (component: Component): void => {
     for (const [name, definition] of attributeDefinitionsMap.get(component) || []) {
         const value = definition.value();
         const kebab = mustKebabCase(name);

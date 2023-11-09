@@ -67,7 +67,7 @@ export const targets = <C extends Component, V extends Element[]>(): TargetsDeco
     };
 };
 
-const initializeTargetable = (component: Component) => {
+export const initializeTargetable = (component: Component) => {
     for (const name of targetDefinitionsMap.get(component) || []) {
         Object.defineProperty(component, name, {
             get(): Element | undefined {

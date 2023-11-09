@@ -6,5 +6,6 @@
  */
 
 export { attributable, attribute } from './attributable.js';
+export { controllable } from './controllable.js';
 export { targetable, target, targets } from './targetable.js';
 export { actionable } from './actionable.js';

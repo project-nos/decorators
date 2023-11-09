@@ -58,7 +58,7 @@ const handleEvent = (event: Event) => {
     }
 };
 
-const initializeActionable = (component: Component, root: Element) => {
+export const initializeActionable = (component: Component, root: Element) => {
     const componentTagName = component.tagName.toLowerCase();
     for (const element of root.querySelectorAll(`[${componentTagName}-action]`)) {
         bindActions(component, element);
@@ -69,7 +69,7 @@ const initializeActionable = (component: Component, root: Element) => {
     }
 };
 
-const observeActionable = (component: Component) => {
+export const observeActionable = (component: Component) => {
     const observer = new MutationObserver((mutations) => {
         for (const mutation of mutations) {
             if (mutation.type === 'attributes' && mutation.target instanceof Element) {
