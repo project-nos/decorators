@@ -6,7 +6,7 @@
  */
 
 import { expect } from '@open-wc/testing';
-import { kebabCase } from '../src/kebab.js';
+import { toKebabCase } from '../src/util.js';
 
 describe('kebabCase', () => {
     const cases: Array<[string, string]> = [
@@ -20,6 +20,6 @@ describe('kebabCase', () => {
     ];
 
     cases.map(([input, output]) =>
-        it(`transforms ${String(input)} to ${output}`, () => expect(kebabCase(input)).to.equal(output)),
+        it(`transforms ${String(input)} to ${output}`, () => expect(toKebabCase(input)).to.equal(output)),
     );
 });

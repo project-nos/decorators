@@ -6,7 +6,7 @@
  */
 
 import { Component, ComponentConstructor } from './component.js';
-import { mustKebabCase } from './kebab.js';
+import { getAccessor, mustKebabCase } from './util.js';
 
 export const initializeAttributable = (component: Component): void => {
     for (const [name, options] of attributeOptionsMap.get(component) || []) {
@@ -33,7 +33,8 @@ export const initializeAttributable = (component: Component): void => {
                 throw new TypeError(`The provided type "${options.type.toString()} is not supported`);
         }
 
-        const initialValue = component[name as keyof Component];
+        const accessor = getAccessor(component, name);
+        const initialValue = accessor.getter.call(component);
         Object.defineProperty(component, name, Object.assign({ configurable: true, enumerable: true }, descriptor));
         if (initialValue !== undefined && !component.hasAttribute(kebab)) {
             descriptor.set!.call(component, initialValue);
