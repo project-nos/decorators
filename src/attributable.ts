@@ -8,47 +8,35 @@
 import { Component, ComponentConstructor } from './component.js';
 import { getAccessor, mustKebabCase } from './util.js';
 
-type Converter = {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    normalize: (value: string | null) => any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    denormalize: (value: any) => string | boolean;
+type Converter<T = any> = {
+    normalize: (value: string | null) => T;
+    denormalize: (value: T) => string | boolean;
 };
 
-const numberConverter: Converter = {
-    normalize: (value) => {
-        return Number(value || 0);
-    },
-    denormalize: (value) => {
-        return String(value);
-    },
+const numberConverter: Converter<number> = {
+    normalize: (value) => Number(value || 0),
+    denormalize: (value) => String(value),
 };
 
-const stringConverter: Converter = {
-    normalize: (value) => {
-        return String(value);
-    },
-    denormalize: (value) => {
-        return String(value);
-    },
+const stringConverter: Converter<string> = {
+    normalize: (value) => String(value),
+    denormalize: (value) => String(value),
 };
 
-const arrayConverter: Converter = {
+const arrayConverter: Converter<any[]> = {
     normalize: (value) => {
-        const normalizedValue = JSON.parse(value || '[]');
+        value = JSON.parse(value || '[]');
 
-        if (normalizedValue === null || typeof normalizedValue !== 'object' || !Array.isArray(normalizedValue)) {
-            throw new TypeError(`Expected value of type "array" but instead got value "${normalizedValue}"`);
+        if (value === null || typeof value !== 'object' || !Array.isArray(value)) {
+            throw new TypeError(`Expected value of type "array" but instead got value "${value}"`);
         }
 
-        return normalizedValue;
+        return value;
     },
-    denormalize: (value) => {
-        return JSON.stringify(value || []);
-    },
+    denormalize: (value) => JSON.stringify(value || []),
 };
 
-const objectConverter: Converter = {
+const objectConverter: Converter<object> = {
     normalize: (value) => {
         value = JSON.parse(value || '{}');
 
@@ -58,34 +46,33 @@ const objectConverter: Converter = {
 
         return value;
     },
-    denormalize: (value) => {
-        return JSON.stringify(value || {});
-    },
+    denormalize: (value) => JSON.stringify(value || {}),
 };
 
 type TypeHint = NumberConstructor | BooleanConstructor | StringConstructor | ArrayConstructor | ObjectConstructor;
 
-const getConverter = (type: TypeHint): Converter => {
-    switch (type) {
-        case Number:
-            return numberConverter;
-        case Array:
-            return arrayConverter;
-        case Object:
-            return objectConverter;
-        default:
-            return stringConverter;
-    }
-};
+const converters = new Map<TypeHint, Converter>([
+    [Number, numberConverter],
+    [String, stringConverter],
+    [Array, arrayConverter],
+    [Object, objectConverter],
+]);
+
+const getConverter = (type: TypeHint): Converter => converters.get(type) ?? stringConverter;
 
 export const initializeAttributable = (component: Component): void => {
-    for (const [name, options] of attributeOptionsMap.get(component) || []) {
+    const attributeOptions = attributeOptionsMap.get(component);
+    if (attributeOptions === undefined) {
+        return;
+    }
+
+    for (const [name, options] of attributeOptions) {
         const kebab = mustKebabCase(name);
         const accessor = getAccessor(component, name);
         const converter = getConverter(options.type);
 
         const descriptor = {
-            get: function (this: Component) {
+            get(this: Component) {
                 accessor.getter.call(this);
 
                 if (options.type === Boolean) {
@@ -94,8 +81,7 @@ export const initializeAttributable = (component: Component): void => {
 
                 return converter.normalize(this.getAttribute(kebab));
             },
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            set: function (this: Component, fresh: any) {
+            set(this: Component, fresh: any) {
                 accessor.setter.call(this, fresh);
                 if (options.type === Boolean) {
                     this.toggleAttribute(kebab, fresh);
@@ -105,7 +91,7 @@ export const initializeAttributable = (component: Component): void => {
             },
         };
 
-        Object.defineProperty(component, name, Object.assign({ configurable: true, enumerable: true }, descriptor));
+        Object.defineProperty(component, name, { configurable: true, enumerable: true, ...descriptor });
 
         const initialValue = accessor.getter.call(component);
         if (initialValue !== undefined && !component.hasAttribute(kebab)) {
@@ -119,14 +105,12 @@ export const initializeAttributable = (component: Component): void => {
 };
 
 type AttributableDecorator = {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (target: ComponentConstructor, context: ClassDecoratorContext): any;
 };
 
 export const attributable = (): AttributableDecorator => {
     return (target) => {
         return class extends target {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             constructor(...args: any[]) {
                 super(args);
                 initializeAttributable(this);
@@ -139,12 +123,10 @@ type AttributeOptions = {
     type: TypeHint;
 };
 
-type AttributeDecorator<C extends Component, V> = {
-    (
-        target: ClassAccessorDecoratorTarget<C, V> | ((value: V) => void),
-        context: ClassAccessorDecoratorContext<C, V> | ClassSetterDecoratorContext<C, V>,
-    ): void;
-};
+type AttributeDecorator<C extends Component, V> = (
+    target: ClassAccessorDecoratorTarget<C, V> | ((value: V) => void),
+    context: ClassAccessorDecoratorContext<C, V> | ClassSetterDecoratorContext<C, V>,
+) => void;
 
 const attributeOptionsMap = new WeakMap<Component, Map<string, AttributeOptions>>();
 

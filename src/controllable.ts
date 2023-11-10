@@ -11,14 +11,12 @@ import { initializeAttributable } from './attributable.js';
 import { initializeTargetable } from './targetable.js';
 
 type ControllableDecorator = {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (target: ComponentConstructor, context: ClassDecoratorContext): any;
 };
 
 export const controllable = (): ControllableDecorator => {
     return (target) => {
         return class extends target {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             constructor(...args: any[]) {
                 super(args);
                 initializeActionable(this, this);

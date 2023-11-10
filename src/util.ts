@@ -37,9 +37,7 @@ export const toKebabCase = (key: string): string => {
 };
 
 export type Accessor = {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     getter: () => any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setter: (value: any) => void;
 };
 

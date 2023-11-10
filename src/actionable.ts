@@ -92,14 +92,12 @@ export const observeActionable = (component: Component) => {
 };
 
 type ActionableDecorator = {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (target: ComponentConstructor, context: ClassDecoratorContext): any;
 };
 
 export const actionable = (): ActionableDecorator => {
     return (target) => {
         return class extends target {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             constructor(...args: any[]) {
                 super(args);
                 initializeActionable(this, this);

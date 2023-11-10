@@ -86,14 +86,12 @@ export const initializeTargetable = (component: Component) => {
 };
 
 type TargetableDecorator = {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (target: ComponentConstructor, context: ClassDecoratorContext): any;
 };
 
 export const targetable = (): TargetableDecorator => {
     return (target) => {
         return class extends target {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             constructor(...args: any[]) {
                 super(args);
                 initializeTargetable(this);
