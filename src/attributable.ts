@@ -109,12 +109,12 @@ export const initializeAttributable = (component: Component): void => {
 
                 return readAttribute(this, definition);
             },
-            set(this: Component, fresh: any) {
+            set(this: Component, value: any) {
                 if (kind === 'setter') {
-                    accessor.setter.call(this, fresh);
+                    accessor.setter.call(this, value);
                 }
 
-                writeAttribute(this, definition, fresh);
+                writeAttribute(this, definition, value);
             },
         };
 
@@ -122,10 +122,7 @@ export const initializeAttributable = (component: Component): void => {
 
         const hasAttribute = component.hasAttribute(name);
         if (hasAttribute && kind === 'setter') {
-            const initialAttributeValue = readAttribute(component, definition);
-            if (initialAttributeValue !== undefined) {
-                accessor.setter.call(component, initialAttributeValue);
-            }
+            accessor.setter.call(component, readAttribute(component, definition));
         }
 
         if (!hasAttribute) {
