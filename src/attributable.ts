@@ -6,7 +6,7 @@
  */
 
 import { Component, ComponentConstructor } from './component.js';
-import { getAccessor, mustKebabCase } from './util.js';
+import { Accessor, getAccessor, mustKebabCase } from './util.js';
 
 type Converter<T = any> = {
     normalize: (value: string | null) => T;
@@ -60,48 +60,122 @@ const converters = new Map<TypeHint, Converter>([
 
 const getConverter = (type: TypeHint): Converter => converters.get(type) ?? stringConverter;
 
+type AttributeOptions = {
+    type: TypeHint;
+};
+
+type AttributeDefinition = {
+    name: string;
+    kind: 'accessor' | 'setter';
+    accessor: Accessor;
+    options: AttributeOptions;
+};
+
+const attributeDefinitionsMap = new WeakMap<Component, Map<PropertyKey, AttributeDefinition>>();
+
+const readAttribute = (component: Component, definition: AttributeDefinition) => {
+    const { options, name } = definition;
+
+    if (options.type === Boolean) {
+        return component.hasAttribute(name);
+    }
+
+    return getConverter(options.type).normalize(component.getAttribute(name));
+};
+
+const writeAttribute = (component: Component, definition: AttributeDefinition, value: any) => {
+    const { options, name } = definition;
+
+    if (options.type === Boolean) {
+        component.toggleAttribute(name, value);
+    } else {
+        component.setAttribute(name, getConverter(options.type).denormalize(value) as string);
+    }
+};
+
 export const initializeAttributable = (component: Component): void => {
-    const attributeOptions = attributeOptionsMap.get(component);
-    if (attributeOptions === undefined) {
+    const attributeDefinitions = attributeDefinitionsMap.get(component);
+    if (attributeDefinitions === undefined) {
         return;
     }
 
-    for (const [name, options] of attributeOptions) {
-        const kebab = mustKebabCase(name);
-        const accessor = getAccessor(component, name);
-        const converter = getConverter(options.type);
-
+    for (const [key, definition] of attributeDefinitions) {
+        const { name, kind, accessor } = definition;
         const descriptor = {
             get(this: Component) {
-                accessor.getter.call(this);
-
-                if (options.type === Boolean) {
-                    return this.hasAttribute(kebab);
+                if (kind === 'setter') {
+                    return accessor.getter.call(this);
                 }
 
-                return converter.normalize(this.getAttribute(kebab));
+                return readAttribute(this, definition);
             },
             set(this: Component, fresh: any) {
-                accessor.setter.call(this, fresh);
-                if (options.type === Boolean) {
-                    this.toggleAttribute(kebab, fresh);
-                } else {
-                    this.setAttribute(kebab, converter.denormalize(fresh) as string);
+                if (kind === 'setter') {
+                    accessor.setter.call(this, fresh);
                 }
+
+                writeAttribute(this, definition, fresh);
             },
         };
 
-        Object.defineProperty(component, name, { configurable: true, enumerable: true, ...descriptor });
+        Object.defineProperty(component, key, { configurable: true, enumerable: true, ...descriptor });
 
-        const initialValue = accessor.getter.call(component);
-        if (initialValue !== undefined && !component.hasAttribute(kebab)) {
-            if (options.type === Boolean) {
-                component.toggleAttribute(kebab, initialValue);
-            } else {
-                component.setAttribute(kebab, converter.denormalize(initialValue) as string);
+        const hasAttribute = component.hasAttribute(name);
+        if (hasAttribute && kind === 'setter') {
+            const initialAttributeValue = readAttribute(component, definition);
+            if (initialAttributeValue !== undefined) {
+                accessor.setter.call(component, initialAttributeValue);
+            }
+        }
+
+        if (!hasAttribute) {
+            const initialPropertyValue = accessor.getter.call(component);
+            if (initialPropertyValue !== undefined) {
+                writeAttribute(component, definition, initialPropertyValue);
             }
         }
     }
+};
+
+const observeAttributable = (component: Component) => {
+    const definitions = attributeDefinitionsMap.get(component);
+    if (definitions === undefined) {
+        return;
+    }
+
+    const filter = [...definitions.values()]
+        .filter((definition) => definition.kind === 'setter')
+        .map((definition) => definition.name);
+
+    if (!filter.length) {
+        return;
+    }
+
+    const handleMutation = (component: Component, mutation: MutationRecord) => {
+        const { type, attributeName } = mutation;
+
+        if (type !== 'attributes') {
+            return;
+        }
+
+        const definition = [...definitions.values()].find((definition) => definition.name === attributeName);
+
+        if (definition === undefined) {
+            return;
+        }
+
+        definition.accessor.setter.call(component, readAttribute(component, definition));
+    };
+
+    const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+            handleMutation(component, mutation);
+        }
+    });
+
+    observer.observe(component, {
+        attributeFilter: filter,
+    });
 };
 
 type AttributableDecorator = {
@@ -115,20 +189,19 @@ export const attributable = (): AttributableDecorator => {
                 super(args);
                 initializeAttributable(this);
             }
+
+            connectedCallback() {
+                super.connectedCallback?.();
+                observeAttributable(this);
+            }
         };
     };
-};
-
-type AttributeOptions = {
-    type: TypeHint;
 };
 
 type AttributeDecorator<C extends Component, V> = (
     target: ClassAccessorDecoratorTarget<C, V> | ((value: V) => void),
     context: ClassAccessorDecoratorContext<C, V> | ClassSetterDecoratorContext<C, V>,
 ) => void;
-
-const attributeOptionsMap = new WeakMap<Component, Map<string, AttributeOptions>>();
 
 export const attribute = <C extends Component, V>(options: AttributeOptions): AttributeDecorator<C, V> => {
     return (_, context) => {
@@ -138,12 +211,17 @@ export const attribute = <C extends Component, V>(options: AttributeOptions): At
         }
 
         addInitializer(function (this: C) {
-            let attributeOptions = attributeOptionsMap.get(this);
-            if (attributeOptions === undefined) {
-                attributeOptionsMap.set(this, (attributeOptions = new Map()));
+            let attributeDefinitions = attributeDefinitionsMap.get(this);
+            if (attributeDefinitions === undefined) {
+                attributeDefinitionsMap.set(this, (attributeDefinitions = new Map()));
             }
 
-            attributeOptions.set(name.toString(), options);
+            attributeDefinitions.set(name, {
+                name: mustKebabCase(name.toString()),
+                kind: kind,
+                accessor: getAccessor(this, name),
+                options: options,
+            });
         });
     };
 };

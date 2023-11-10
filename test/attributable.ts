@@ -108,6 +108,7 @@ describe('initialization', () => {
         expect(instance).to.deep.property('testObject', { foo: 'baz' });
 
         instance.setAttribute('test-getter-setter', 'bing');
+        await Promise.resolve();
         expect(instance).to.have.property('testGetterSetter', 'bing');
     });
 
@@ -145,6 +146,20 @@ describe('initialization', () => {
 
         instance.testGetterSetter = 'bong';
         expect(instance).to.have.property('testGetterSetterSetCount', 2);
+    });
+
+    it('does not excessively call set on attribute change', async () => {
+        instance = await fixture(html`<initialize-attribute-test test-getter-setter="bing" />`);
+
+        instance.setAttribute('test-getter-setter', 'bing');
+        instance.setAttribute('test-getter-setter', 'bing');
+        instance.setAttribute('test-getter-setter', 'bing');
+        instance.setAttribute('test-getter-setter', 'bing');
+
+        await Promise.resolve();
+
+        expect(instance).to.have.property('testGetterSetterGetCount', 0);
+        expect(instance).to.have.property('testGetterSetterSetCount', 5);
     });
 });
 

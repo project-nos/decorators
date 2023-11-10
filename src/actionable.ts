@@ -70,17 +70,23 @@ export const initializeActionable = (component: Component, root: Element) => {
 };
 
 export const observeActionable = (component: Component) => {
-    const observer = new MutationObserver((mutations) => {
-        for (const mutation of mutations) {
-            if (mutation.type === 'attributes' && mutation.target instanceof Element) {
-                initializeActionable(component, mutation.target);
-            } else if (mutation.type === 'childList' && mutation.addedNodes.length) {
-                for (const node of mutation.addedNodes) {
-                    if (node instanceof Element) {
-                        initializeActionable(component, node);
-                    }
+    const handleMutation = (mutation: MutationRecord) => {
+        const { type, target, addedNodes } = mutation;
+
+        if (type === 'attributes' && target instanceof Element) {
+            initializeActionable(component, target);
+        } else if (type === 'childList' && addedNodes.length) {
+            for (const node of addedNodes) {
+                if (node instanceof Element) {
+                    initializeActionable(component, node);
                 }
             }
+        }
+    };
+
+    const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+            handleMutation(mutation);
         }
     });
 

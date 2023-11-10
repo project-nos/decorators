@@ -45,10 +45,10 @@ export type Accessor = {
  * Retrieves the property descriptor for the specified key in the prototype chain of the given instance.
  *
  * @param {unknown} instance - The object instance to search for the property.
- * @param {string} key - The key of the property to retrieve the descriptor for.
+ * @param {PropertyKey} key - The key of the property to retrieve the descriptor for.
  * @returns {PropertyDescriptor} The property descriptor if found, or a default descriptor if not found.
  */
-export const getAccessor = (instance: unknown, key: string): Accessor => {
+export const getAccessor = (instance: unknown, key: PropertyKey): Accessor => {
     let descriptor: PropertyDescriptor | undefined;
     while (instance) {
         descriptor = Object.getOwnPropertyDescriptor(instance, key);
