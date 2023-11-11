@@ -7,7 +7,7 @@
 
 import { ComponentConstructor } from './component.js';
 import { initializeActionable, observeActionable } from './actionable.js';
-import { initializeAttributable } from './attributable.js';
+import { initializeAttributable, observeAttributable } from './attributable.js';
 import { initializeTargetable } from './targetable.js';
 
 type ControllableDecorator = {
@@ -27,6 +27,7 @@ export const controllable = (): ControllableDecorator => {
             connectedCallback() {
                 super.connectedCallback?.();
                 observeActionable(this);
+                observeAttributable(this);
             }
         };
     };

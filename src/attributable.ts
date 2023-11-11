@@ -134,7 +134,7 @@ export const initializeAttributable = (component: Component): void => {
     }
 };
 
-const observeAttributable = (component: Component) => {
+export const observeAttributable = (component: Component) => {
     const definitions = attributeDefinitionsMap.get(component);
     if (definitions === undefined) {
         return;
