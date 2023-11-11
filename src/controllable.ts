@@ -24,14 +24,14 @@ export const controllable = (): ControllableDecorator => {
             constructor(...args: any[]) {
                 super(args);
                 initializeActionable(this, this);
-                initializeAttributable(this);
+                initializeAttributable(this, metadata);
                 initializeTargetable(this, metadata);
             }
 
             connectedCallback() {
                 super.connectedCallback?.();
                 observeActionable(this);
-                observeAttributable(this);
+                observeAttributable(this, metadata);
             }
         };
     };

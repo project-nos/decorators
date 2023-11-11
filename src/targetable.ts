@@ -6,6 +6,7 @@
  */
 
 import { Component, ComponentConstructor } from './component.js';
+import { defineProperties } from './util.js';
 
 const findTarget = <C extends Component, V extends Element | undefined>(component: C, name: string): V => {
     const componentTagName = component.tagName.toLowerCase();
@@ -73,18 +74,14 @@ export const targets = <C extends Component, V extends Element[]>(): TargetsDeco
 
 export const initializeTargetable = (component: Component, metadata: object) => {
     for (const name of targetDefinitionsMap.get(metadata) || []) {
-        Object.defineProperty(component, name, {
-            get(): Element | undefined {
-                return findTarget(component, name);
-            },
+        defineProperties(component, name, {
+            get: (): Element | undefined => findTarget(component, name),
         });
     }
 
     for (const name of targetsDefinitionsMap.get(metadata) || []) {
-        Object.defineProperty(component, name, {
-            get(): Element[] {
-                return findTargets(component, name);
-            },
+        defineProperties(component, name, {
+            get: (): Element[] => findTargets(component, name),
         });
     }
 };

@@ -5,6 +5,8 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+import { Component } from './component.js';
+
 /**
  * Converts a string to kebab-case and throws an error if no hyphens are present.
  *
@@ -64,4 +66,20 @@ export const getAccessor = (instance: unknown, key: PropertyKey): Accessor => {
         getter: (descriptor && descriptor.get) || (() => undefined),
         setter: (descriptor && descriptor.set) || (() => undefined),
     };
+};
+
+/**
+ * Defines a property on a component and ensures it is configurable and enumerable.
+ *
+ * @template C - The type of the component.
+ * @param {C} component - The component on which property is defined.
+ * @param {PropertyKey} key - The key of the property to define.
+ * @param {PropertyDescriptor} descriptor - The descriptor for the property.
+ */
+export const defineProperties = <C extends Component>(
+    component: C,
+    key: PropertyKey,
+    descriptor: PropertyDescriptor,
+) => {
+    Object.defineProperty(component, key, { configurable: true, enumerable: true, ...descriptor });
 };

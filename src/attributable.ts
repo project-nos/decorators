@@ -6,7 +6,7 @@
  */
 
 import { Component, ComponentConstructor } from './component.js';
-import { Accessor, getAccessor, mustKebabCase } from './util.js';
+import { Accessor, defineProperties, getAccessor, mustKebabCase } from './util.js';
 
 type Converter<T = any> = {
     normalize: (value: string | null) => T;
@@ -71,7 +71,7 @@ type AttributeDefinition = {
     options: AttributeOptions;
 };
 
-const attributeDefinitionsMap = new WeakMap<Component, Map<PropertyKey, AttributeDefinition>>();
+const attributeDefinitionsMap = new WeakMap<object, Map<PropertyKey, AttributeDefinition>>();
 
 const readAttribute = (component: Component, definition: AttributeDefinition) => {
     const { options, name } = definition;
@@ -93,8 +93,8 @@ const writeAttribute = (component: Component, definition: AttributeDefinition, v
     }
 };
 
-export const initializeAttributable = (component: Component): void => {
-    const attributeDefinitions = attributeDefinitionsMap.get(component);
+export const initializeAttributable = (component: Component, metadata: object): void => {
+    const attributeDefinitions = attributeDefinitionsMap.get(metadata);
     if (attributeDefinitions === undefined) {
         return;
     }
@@ -118,7 +118,7 @@ export const initializeAttributable = (component: Component): void => {
             },
         };
 
-        Object.defineProperty(component, key, { configurable: true, enumerable: true, ...descriptor });
+        defineProperties(component, key, descriptor);
 
         const hasAttribute = component.hasAttribute(name);
         if (hasAttribute && kind === 'setter') {
@@ -134,8 +134,8 @@ export const initializeAttributable = (component: Component): void => {
     }
 };
 
-export const observeAttributable = (component: Component) => {
-    const definitions = attributeDefinitionsMap.get(component);
+export const observeAttributable = (component: Component, metadata: object) => {
+    const definitions = attributeDefinitionsMap.get(metadata);
     if (definitions === undefined) {
         return;
     }
@@ -175,45 +175,53 @@ export const observeAttributable = (component: Component) => {
     });
 };
 
+type AttributableDecoratorContext = ClassDecoratorContext & { metadata: object };
+
 type AttributableDecorator = {
-    (target: ComponentConstructor, context: ClassDecoratorContext): any;
+    (target: ComponentConstructor, context: AttributableDecoratorContext): any;
 };
 
 export const attributable = (): AttributableDecorator => {
-    return (target) => {
+    return (target, context) => {
+        const { metadata } = context;
+
         return class extends target {
             constructor(...args: any[]) {
                 super(args);
-                initializeAttributable(this);
+                initializeAttributable(this, metadata);
             }
 
             connectedCallback() {
                 super.connectedCallback?.();
-                observeAttributable(this);
+                observeAttributable(this, metadata);
             }
         };
     };
 };
 
+type AttributeDecoratorContext<C, V> = (ClassAccessorDecoratorContext<C, V> | ClassSetterDecoratorContext<C, V>) & {
+    metadata: object;
+};
+
 type AttributeDecorator<C extends Component, V> = (
     target: ClassAccessorDecoratorTarget<C, V> | ((value: V) => void),
-    context: ClassAccessorDecoratorContext<C, V> | ClassSetterDecoratorContext<C, V>,
+    context: AttributeDecoratorContext<C, V>,
 ) => void;
 
 export const attribute = <C extends Component, V>(options: AttributeOptions): AttributeDecorator<C, V> => {
     return (_, context) => {
-        const { kind, addInitializer, name } = context;
+        const { kind, addInitializer, metadata, name } = context;
         if (kind !== 'accessor' && kind !== 'setter') {
             throw new Error('The @attribute decorator is for use on accessors and setters only.');
         }
 
         addInitializer(function (this: C) {
-            let attributeDefinitions = attributeDefinitionsMap.get(this);
-            if (attributeDefinitions === undefined) {
-                attributeDefinitionsMap.set(this, (attributeDefinitions = new Map()));
+            let definitions = attributeDefinitionsMap.get(metadata);
+            if (definitions === undefined) {
+                attributeDefinitionsMap.set(metadata, (definitions = new Map()));
             }
 
-            attributeDefinitions.set(name, {
+            definitions.set(name, {
                 name: mustKebabCase(name.toString()),
                 kind: kind,
                 accessor: getAccessor(this, name),
