@@ -23,21 +23,23 @@ const findTargets = <C extends Component, V extends Element[]>(component: C, nam
     ) as V;
 };
 
-const targetDefinitionsMap = new WeakMap<Component, Set<string>>();
+const targetDefinitionsMap = new WeakMap<object, Set<string>>();
+
+type TargetDecoratorContext<C, V> = ClassAccessorDecoratorContext<C, V> & { metadata: object };
 
 type TargetDecorator<C extends Component, V extends Element | undefined> = (
     target: ClassAccessorDecoratorTarget<C, V>,
-    context: ClassAccessorDecoratorContext<C, V>,
+    context: TargetDecoratorContext<C, V>,
 ) => void;
 
 export const target = <C extends Component, V extends Element | undefined>(): TargetDecorator<C, V> => {
     return (_, context) => {
-        const { name, addInitializer } = context;
+        const { name, addInitializer, metadata } = context;
 
-        addInitializer(function (this) {
-            let targetDefinitions = targetDefinitionsMap.get(this);
+        addInitializer(() => {
+            let targetDefinitions = targetDefinitionsMap.get(metadata);
             if (targetDefinitions === undefined) {
-                targetDefinitionsMap.set(this, (targetDefinitions = new Set()));
+                targetDefinitionsMap.set(metadata, (targetDefinitions = new Set()));
             }
 
             targetDefinitions.add(name.toString());
@@ -45,21 +47,23 @@ export const target = <C extends Component, V extends Element | undefined>(): Ta
     };
 };
 
-const targetsDefinitionsMap = new WeakMap<Component, Set<string>>();
+const targetsDefinitionsMap = new WeakMap<object, Set<string>>();
+
+type TargetsDecoratorContext<C, V> = ClassAccessorDecoratorContext<C, V> & { metadata: object };
 
 type TargetsDecorator<C extends Component, V extends Element[]> = (
     target: ClassAccessorDecoratorTarget<C, V>,
-    context: ClassAccessorDecoratorContext<C, V>,
+    context: TargetsDecoratorContext<C, V>,
 ) => void;
 
 export const targets = <C extends Component, V extends Element[]>(): TargetsDecorator<C, V> => {
     return (_, context) => {
-        const { name, addInitializer } = context;
+        const { name, addInitializer, metadata } = context;
 
-        addInitializer(function (this: C) {
-            let targetsDefinition = targetsDefinitionsMap.get(this);
+        addInitializer(() => {
+            let targetsDefinition = targetsDefinitionsMap.get(metadata);
             if (targetsDefinition === undefined) {
-                targetsDefinitionsMap.set(this, (targetsDefinition = new Set()));
+                targetsDefinitionsMap.set(metadata, (targetsDefinition = new Set()));
             }
 
             targetsDefinition.add(name.toString());
@@ -67,8 +71,8 @@ export const targets = <C extends Component, V extends Element[]>(): TargetsDeco
     };
 };
 
-export const initializeTargetable = (component: Component) => {
-    for (const name of targetDefinitionsMap.get(component) || []) {
+export const initializeTargetable = (component: Component, metadata: object) => {
+    for (const name of targetDefinitionsMap.get(metadata) || []) {
         Object.defineProperty(component, name, {
             get(): Element | undefined {
                 return findTarget(component, name);
@@ -76,7 +80,7 @@ export const initializeTargetable = (component: Component) => {
         });
     }
 
-    for (const name of targetsDefinitionsMap.get(component) || []) {
+    for (const name of targetsDefinitionsMap.get(metadata) || []) {
         Object.defineProperty(component, name, {
             get(): Element[] {
                 return findTargets(component, name);
@@ -85,16 +89,20 @@ export const initializeTargetable = (component: Component) => {
     }
 };
 
+type TargetableDecoratorContext = ClassDecoratorContext & { metadata: object };
+
 type TargetableDecorator = {
-    (target: ComponentConstructor, context: ClassDecoratorContext): any;
+    (target: ComponentConstructor, context: TargetableDecoratorContext): any;
 };
 
 export const targetable = (): TargetableDecorator => {
-    return (target) => {
+    return (target, context) => {
+        const { metadata } = context;
+
         return class extends target {
             constructor(...args: any[]) {
                 super(args);
-                initializeTargetable(this);
+                initializeTargetable(this, metadata);
             }
         };
     };

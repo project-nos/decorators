@@ -10,18 +10,22 @@ import { initializeActionable, observeActionable } from './actionable.js';
 import { initializeAttributable, observeAttributable } from './attributable.js';
 import { initializeTargetable } from './targetable.js';
 
+type ControllableDecoratorContext = ClassDecoratorContext & { metadata: object };
+
 type ControllableDecorator = {
-    (target: ComponentConstructor, context: ClassDecoratorContext): any;
+    (target: ComponentConstructor, context: ControllableDecoratorContext): any;
 };
 
 export const controllable = (): ControllableDecorator => {
-    return (target) => {
+    return (target, context) => {
+        const { metadata } = context;
+
         return class extends target {
             constructor(...args: any[]) {
                 super(args);
                 initializeActionable(this, this);
                 initializeAttributable(this);
-                initializeTargetable(this);
+                initializeTargetable(this, metadata);
             }
 
             connectedCallback() {
