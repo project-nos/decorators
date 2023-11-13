@@ -9,16 +9,19 @@ import { ComponentConstructor } from './component.js';
 import { initializeActionable, observeActionable } from './actionable.js';
 import { initializeAttributable, observeAttributable } from './attributable.js';
 import { initializeTargetable } from './targetable.js';
+import { initializeRegistrable } from './registrable.js';
 
-type ControllableDecoratorContext = ClassDecoratorContext & { metadata: object };
+type ControllableDecoratorContext<C extends ComponentConstructor> = ClassDecoratorContext<C> & { metadata: object };
 
-type ControllableDecorator = {
-    (target: ComponentConstructor, context: ControllableDecoratorContext): any;
+type ControllableDecorator<C extends ComponentConstructor> = {
+    (target: ComponentConstructor, context: ControllableDecoratorContext<C>): any;
 };
 
-export const controllable = (): ControllableDecorator => {
+export const controllable = <C extends ComponentConstructor>(): ControllableDecorator<C> => {
     return (target, context) => {
-        const { metadata } = context;
+        const { metadata, addInitializer } = context;
+
+        initializeRegistrable(addInitializer);
 
         return class extends target {
             constructor(...args: any[]) {

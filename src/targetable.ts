@@ -86,13 +86,13 @@ export const initializeTargetable = (component: Component, metadata: object) => 
     }
 };
 
-type TargetableDecoratorContext = ClassDecoratorContext & { metadata: object };
+type TargetableDecoratorContext<C extends ComponentConstructor> = ClassDecoratorContext<C> & { metadata: object };
 
-type TargetableDecorator = {
-    (target: ComponentConstructor, context: TargetableDecoratorContext): any;
+type TargetableDecorator<C extends ComponentConstructor> = {
+    (target: ComponentConstructor, context: TargetableDecoratorContext<C>): any;
 };
 
-export const targetable = (): TargetableDecorator => {
+export const targetable = <C extends ComponentConstructor>(): TargetableDecorator<C> => {
     return (target, context) => {
         const { metadata } = context;
 

@@ -175,13 +175,13 @@ export const observeAttributable = (component: Component, metadata: object) => {
     });
 };
 
-type AttributableDecoratorContext = ClassDecoratorContext & { metadata: object };
+type AttributableDecoratorContext<C extends ComponentConstructor> = ClassDecoratorContext<C> & { metadata: object };
 
-type AttributableDecorator = {
-    (target: ComponentConstructor, context: AttributableDecoratorContext): any;
+type AttributableDecorator<C extends ComponentConstructor> = {
+    (target: ComponentConstructor, context: AttributableDecoratorContext<C>): any;
 };
 
-export const attributable = (): AttributableDecorator => {
+export const attributable = <C extends ComponentConstructor>(): AttributableDecorator<C> => {
     return (target, context) => {
         const { metadata } = context;
 

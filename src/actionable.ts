@@ -97,11 +97,11 @@ export const observeActionable = (component: Component) => {
     });
 };
 
-type ActionableDecorator = {
-    (target: ComponentConstructor, context: ClassDecoratorContext): any;
+type ActionableDecorator<C extends ComponentConstructor> = {
+    (target: ComponentConstructor, context: ClassDecoratorContext<C>): any;
 };
 
-export const actionable = (): ActionableDecorator => {
+export const actionable = <C extends ComponentConstructor>(): ActionableDecorator<C> => {
     return (target) => {
         return class extends target {
             constructor(...args: any[]) {
