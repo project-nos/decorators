@@ -19,9 +19,9 @@ type ControllableDecorator<C extends ComponentConstructor> = {
 
 export const controllable = <C extends ComponentConstructor>(): ControllableDecorator<C> => {
     return (target, context) => {
-        const { metadata, addInitializer } = context;
+        const { metadata } = context;
 
-        initializeRegistrable(addInitializer);
+        initializeRegistrable(context);
 
         return class extends target {
             constructor(...args: any[]) {

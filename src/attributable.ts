@@ -210,23 +210,31 @@ type AttributeDecorator<C extends Component, V> = (
 
 export const attribute = <C extends Component, V>(options: AttributeOptions): AttributeDecorator<C, V> => {
     return (_, context) => {
-        const { kind, addInitializer, metadata, name } = context;
-        if (kind !== 'accessor' && kind !== 'setter') {
-            throw new Error('The @attribute decorator is for use on accessors and setters only.');
+        initializeAttribute(context, options);
+    };
+};
+
+export const initializeAttribute = <C extends Component, V>(
+    context: AttributeDecoratorContext<C, V>,
+    options: AttributeOptions,
+) => {
+    const { kind, addInitializer, metadata, name } = context;
+
+    if (kind !== 'accessor' && kind !== 'setter') {
+        throw new Error('The @attribute decorator is for use on accessors and setters only.');
+    }
+
+    addInitializer(function (this: C) {
+        let definitions = attributeDefinitionsMap.get(metadata);
+        if (definitions === undefined) {
+            attributeDefinitionsMap.set(metadata, (definitions = new Map()));
         }
 
-        addInitializer(function (this: C) {
-            let definitions = attributeDefinitionsMap.get(metadata);
-            if (definitions === undefined) {
-                attributeDefinitionsMap.set(metadata, (definitions = new Map()));
-            }
-
-            definitions.set(name, {
-                name: mustKebabCase(name.toString()),
-                kind: kind,
-                accessor: getAccessor(this, name),
-                options: options,
-            });
+        definitions.set(name, {
+            name: mustKebabCase(name.toString()),
+            kind: kind,
+            accessor: getAccessor(this, name),
+            options: options,
         });
-    };
+    });
 };

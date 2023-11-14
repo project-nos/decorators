@@ -33,18 +33,24 @@ type TargetDecorator<C extends Component, V extends Element | undefined> = (
     context: TargetDecoratorContext<C, V>,
 ) => void;
 
+export const initializeTarget = <C extends Component, V extends Element | undefined>(
+    context: TargetDecoratorContext<C, V>,
+) => {
+    const { name, addInitializer, metadata } = context;
+
+    addInitializer(() => {
+        let targetDefinitions = targetDefinitionsMap.get(metadata);
+        if (targetDefinitions === undefined) {
+            targetDefinitionsMap.set(metadata, (targetDefinitions = new Set()));
+        }
+
+        targetDefinitions.add(name.toString());
+    });
+};
+
 export const target = <C extends Component, V extends Element | undefined>(): TargetDecorator<C, V> => {
     return (_, context) => {
-        const { name, addInitializer, metadata } = context;
-
-        addInitializer(() => {
-            let targetDefinitions = targetDefinitionsMap.get(metadata);
-            if (targetDefinitions === undefined) {
-                targetDefinitionsMap.set(metadata, (targetDefinitions = new Set()));
-            }
-
-            targetDefinitions.add(name.toString());
-        });
+        initializeTarget(context);
     };
 };
 
@@ -57,18 +63,22 @@ type TargetsDecorator<C extends Component, V extends Element[]> = (
     context: TargetsDecoratorContext<C, V>,
 ) => void;
 
+export const initializeTargets = <C extends Component, V extends Element[]>(context: TargetsDecoratorContext<C, V>) => {
+    const { name, addInitializer, metadata } = context;
+
+    addInitializer(() => {
+        let targetsDefinition = targetsDefinitionsMap.get(metadata);
+        if (targetsDefinition === undefined) {
+            targetsDefinitionsMap.set(metadata, (targetsDefinition = new Set()));
+        }
+
+        targetsDefinition.add(name.toString());
+    });
+};
+
 export const targets = <C extends Component, V extends Element[]>(): TargetsDecorator<C, V> => {
     return (_, context) => {
-        const { name, addInitializer, metadata } = context;
-
-        addInitializer(() => {
-            let targetsDefinition = targetsDefinitionsMap.get(metadata);
-            if (targetsDefinition === undefined) {
-                targetsDefinitionsMap.set(metadata, (targetsDefinition = new Set()));
-            }
-
-            targetsDefinition.add(name.toString());
-        });
+        initializeTargets(context);
     };
 };
 

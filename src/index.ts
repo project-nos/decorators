@@ -6,7 +6,20 @@
  */
 
 export { actionable, initializeActionable, observeActionable } from './actionable.js';
-export { attributable, attribute, initializeAttributable, observeAttributable } from './attributable.js';
+export {
+    attributable,
+    attribute,
+    initializeAttributable,
+    observeAttributable,
+    initializeAttribute,
+} from './attributable.js';
 export { controllable } from './controllable.js';
 export { registrable, initializeRegistrable } from './registrable.js';
-export { targetable, target, targets, initializeTargetable } from './targetable.js';
+export {
+    targetable,
+    target,
+    targets,
+    initializeTargetable,
+    initializeTarget,
+    initializeTargets,
+} from './targetable.js';

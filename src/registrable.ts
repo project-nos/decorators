@@ -12,8 +12,10 @@ type RegistrableDecorator<C extends ComponentConstructor> = {
     (target: ComponentConstructor, context: ClassDecoratorContext<C>): any;
 };
 
-export const initializeRegistrable = (addInitializer: (initializer: (this: ComponentConstructor) => void) => void) => {
-    addInitializer(function (this) {
+export const initializeRegistrable = <C extends ComponentConstructor>(context: ClassDecoratorContext<C>) => {
+    const { addInitializer } = context;
+
+    addInitializer(function (this: C) {
         try {
             customElements.define(mustKebabCase(this.name), this);
         } catch (error: unknown) {
@@ -28,8 +30,6 @@ export const initializeRegistrable = (addInitializer: (initializer: (this: Compo
 
 export const registrable = <C extends ComponentConstructor>(): RegistrableDecorator<C> => {
     return (_, context) => {
-        const { addInitializer } = context;
-
-        initializeRegistrable(addInitializer);
+        initializeRegistrable(context);
     };
 };
