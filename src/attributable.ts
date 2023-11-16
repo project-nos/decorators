@@ -60,7 +60,7 @@ const converters = new Map<TypeHint, Converter>([
 
 const getConverter = (type: TypeHint): Converter => converters.get(type) ?? stringConverter;
 
-type AttributeOptions = {
+export type AttributeOptions = {
     type: TypeHint;
 };
 
@@ -199,7 +199,10 @@ export const attributable = <C extends ComponentConstructor>(): AttributableDeco
     };
 };
 
-type AttributeDecoratorContext<C, V> = (ClassAccessorDecoratorContext<C, V> | ClassSetterDecoratorContext<C, V>) & {
+export type AttributeDecoratorContext<C, V> = (
+    | ClassAccessorDecoratorContext<C, V>
+    | ClassSetterDecoratorContext<C, V>
+) & {
     metadata: object;
 };
 

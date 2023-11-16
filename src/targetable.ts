@@ -26,7 +26,7 @@ const findTargets = <C extends Component, V extends Element[]>(component: C, nam
 
 const targetDefinitionsMap = new WeakMap<object, Set<string>>();
 
-type TargetDecoratorContext<C, V> = ClassAccessorDecoratorContext<C, V> & { metadata: object };
+export type TargetDecoratorContext<C, V> = ClassAccessorDecoratorContext<C, V> & { metadata: object };
 
 type TargetDecorator<C extends Component, V extends Element | undefined> = (
     target: ClassAccessorDecoratorTarget<C, V>,
@@ -56,7 +56,7 @@ export const target = <C extends Component, V extends Element | undefined>(): Ta
 
 const targetsDefinitionsMap = new WeakMap<object, Set<string>>();
 
-type TargetsDecoratorContext<C, V> = ClassAccessorDecoratorContext<C, V> & { metadata: object };
+export type TargetsDecoratorContext<C, V> = ClassAccessorDecoratorContext<C, V> & { metadata: object };
 
 type TargetsDecorator<C extends Component, V extends Element[]> = (
     target: ClassAccessorDecoratorTarget<C, V>,

@@ -11,7 +11,9 @@ import { initializeAttributable, observeAttributable } from './attributable.js';
 import { initializeTargetable } from './targetable.js';
 import { initializeRegistrable } from './registrable.js';
 
-type ControllableDecoratorContext<C extends ComponentConstructor> = ClassDecoratorContext<C> & { metadata: object };
+export type ControllableDecoratorContext<C extends ComponentConstructor> = ClassDecoratorContext<C> & {
+    metadata: object;
+};
 
 type ControllableDecorator<C extends ComponentConstructor> = {
     (target: ComponentConstructor, context: ControllableDecoratorContext<C>): any;
