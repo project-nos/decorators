@@ -175,7 +175,9 @@ export const observeAttributable = (component: Component, metadata: object) => {
     });
 };
 
-type AttributableDecoratorContext<C extends ComponentConstructor> = ClassDecoratorContext<C> & { metadata: object };
+export type AttributableDecoratorContext<C extends ComponentConstructor> = ClassDecoratorContext<C> & {
+    metadata: object;
+};
 
 type AttributableDecorator<C extends ComponentConstructor> = {
     (target: ComponentConstructor, context: AttributableDecoratorContext<C>): any;

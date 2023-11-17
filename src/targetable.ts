@@ -96,7 +96,9 @@ export const initializeTargetable = (component: Component, metadata: object) => 
     }
 };
 
-type TargetableDecoratorContext<C extends ComponentConstructor> = ClassDecoratorContext<C> & { metadata: object };
+export type TargetableDecoratorContext<C extends ComponentConstructor> = ClassDecoratorContext<C> & {
+    metadata: object;
+};
 
 type TargetableDecorator<C extends ComponentConstructor> = {
     (target: ComponentConstructor, context: TargetableDecoratorContext<C>): any;
