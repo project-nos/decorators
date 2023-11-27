@@ -163,18 +163,51 @@ describe('initialization', () => {
     });
 });
 
-describe('boolean casting', () => {
+describe('types', () => {
     @attributable()
-    class BooleanAttributeTest extends HTMLElement {
+    class TypeAttributeTest extends HTMLElement {
+        @attribute({ type: Number })
+        accessor testNumber!: number;
+
+        @attribute({ type: String })
+        accessor testString!: string;
+
         @attribute({ type: Boolean })
-        accessor testBool = false;
+        accessor testBool!: boolean;
+
+        @attribute({ type: Array })
+        accessor testArray!: [];
+
+        @attribute({ type: Object })
+        accessor testObject!: object;
     }
 
-    window.customElements.define('boolean-attribute-test', BooleanAttributeTest);
+    window.customElements.define('type-attribute-test', TypeAttributeTest);
 
-    let instance: BooleanAttributeTest;
+    let instance: TypeAttributeTest;
+    it('defaults to 0 if number is not initialized', async () => {
+        instance = await fixture(html`<type-attribute-test />`);
+
+        expect(instance).to.have.property('testNumber', 0);
+        expect(instance).to.not.have.attribute('test-number');
+    });
+
+    it('defaults to empty string if string is not initialized', async () => {
+        instance = await fixture(html`<type-attribute-test />`);
+
+        expect(instance).to.have.property('testString', '');
+        expect(instance).to.not.have.attribute('test-string');
+    });
+
+    it('defaults to false if boolean is not initialized', async () => {
+        instance = await fixture(html`<type-attribute-test />`);
+
+        expect(instance).to.have.property('testBool', false);
+        expect(instance).to.not.have.attribute('test-bool');
+    });
+
     it('toggles boolean properties', async () => {
-        instance = await fixture(html`<boolean-attribute-test />`);
+        instance = await fixture(html`<type-attribute-test />`);
 
         instance.setAttribute('test-bool', 'foo');
         expect(instance).to.have.property('testBool', true);
@@ -193,6 +226,20 @@ describe('boolean casting', () => {
 
         instance.testBool = false;
         expect(instance).to.have.property('testBool', false);
+    });
+
+    it('defaults to an empty array if array is not initialized', async () => {
+        instance = await fixture(html`<type-attribute-test />`);
+
+        await expect(instance).to.have.property('testArray').that.deep.equals([]);
+        expect(instance).to.not.have.attribute('test-array');
+    });
+
+    it('defaults to an empty object if object is not initialized', async () => {
+        instance = await fixture(html`<type-attribute-test />`);
+
+        await expect(instance).to.have.property('testObject').that.deep.equals({});
+        expect(instance).to.not.have.attribute('test-object');
     });
 });
 

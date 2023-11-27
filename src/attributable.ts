@@ -19,7 +19,7 @@ const numberConverter: Converter<number> = {
 };
 
 const stringConverter: Converter<string> = {
-    normalize: (value) => String(value),
+    normalize: (value) => String(value || ''),
     denormalize: (value) => String(value),
 };
 
