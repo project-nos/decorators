@@ -38,7 +38,7 @@ Full tech stack [here](/techstack.md)
 # Tech Stack File
 ![](https://img.stackshare.io/repo.svg "repo") [project-nos/decorators](https://github.com/project-nos/decorators)![](https://img.stackshare.io/public_badge.svg "public")
 <br/><br/>
-|19<br/>Tools used|12/14/23 <br/>Report generated|
+|19<br/>Tools used|01/05/24 <br/>Report generated|
 |------|------|
 </div>
 
