@@ -1,7 +1,8 @@
 repo_name: project-nos/decorators
-report_id: 0aa133259d7bd3af9bf4a504339fb504
+report_id: 19eadbefd73f34a86a3b3054e49bc764
+version: 0.1
 repo_type: Public
-timestamp: '2023-12-14T13:15:21+00:00'
+timestamp: '2024-01-05T08:36:56+00:00'
 requested_by: andreaspenz
 provider: github
 branch: master
@@ -16,6 +17,7 @@ tools:
   category: Languages & Frameworks
   sub_category: Languages
   image_url: https://img.stackshare.io/service/1209/javascript.jpeg
+  detection_source_url: https://github.com/project-nos/decorators
   detection_source: Repo Metadata
 - name: TypeScript
   description: A superset of JavaScript that compiles to clean JavaScript output
@@ -26,6 +28,7 @@ tools:
   category: Languages & Frameworks
   sub_category: Languages
   image_url: https://img.stackshare.io/service/1612/bynNY5dJ.jpg
+  detection_source_url: https://github.com/project-nos/decorators
   detection_source: Repo Metadata
 - name: Babel
   description: Use next generation JavaScript, today.
@@ -50,6 +53,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Code Review
   image_url: https://img.stackshare.io/service/3337/Q4L7Jncy.jpg
+  detection_source_url: https://github.com/project-nos/decorators/blob/master/package.json
   detection_source: package.json
   last_updated_by: Andreas Penz
   last_updated_on: 2023-06-17 16:41:01.000000000 Z
@@ -61,6 +65,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Version Control System
   image_url: https://img.stackshare.io/service/1046/git.png
+  detection_source_url: https://github.com/project-nos/decorators
   detection_source: Repo Metadata
 - name: GitHub Actions
   description: Automate your workflow from idea to production
@@ -70,6 +75,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Continuous Integration
   image_url: https://img.stackshare.io/service/11563/actions.png
+  detection_source_url: https://github.com/project-nos/decorators/blob/master/.github/workflows/publish.yml
   detection_source: ".github/workflows/publish.yml"
   last_updated_by: Andreas Penz
   last_updated_on: 2023-06-19 07:27:58.000000000 Z
@@ -82,6 +88,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Javascript Testing Framework
   image_url: https://img.stackshare.io/service/830/jest.png
+  detection_source_url: https://github.com/project-nos/decorators/blob/master/package.json
   detection_source: package.json
   last_updated_by: Andreas Penz
   last_updated_on: 2023-06-17 16:41:01.000000000 Z
@@ -120,6 +127,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Front End Package Manager
   image_url: https://img.stackshare.io/service/1120/lejvzrnlpb308aftn31u.png
+  detection_source_url: https://github.com/project-nos/decorators/blob/master/package.json
   detection_source: package.json
   last_updated_by: Andreas Penz
   last_updated_on: 2023-06-17 16:41:01.000000000 Z
